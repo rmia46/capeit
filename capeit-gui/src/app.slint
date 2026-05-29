@@ -53,7 +53,6 @@ component HubCard inherits Rectangle {
     VerticalBox {
         padding: 16px;
         spacing: 12px;
-        alignment: start;
         Text { text: title; color: Theme.text_muted; font_size: 14px; font_weight: 700; }
         @children
     }
@@ -183,6 +182,16 @@ export component AppWindow inherits Window {
     in property <int> active_thermal_limit: 0;
     in property <int> active_gpu_temp_limit: 0;
     
+    // System Info (Dynamic from inxi)
+    in property <string> sys_distro: "";
+    in property <string> sys_desktop: "";
+    in property <string> sys_kernel: "";
+    in property <string> sys_cpu: "";
+    in property <string> sys_gpu: "";
+    in property <string> sys_ram: "";
+    in property <string> sys_model: "";
+    in property <string> sys_raw_info: "Gathering detailed hardware specifications... please wait.";
+
     in property <string> toast_msg: "";
     in property <bool> show_toast: false;
     in property <bool> toast_is_error: false;
@@ -511,20 +520,51 @@ export component AppWindow inherits Window {
                 }
 
                 // SYSTEM INFO
-                if active_side == 2 : VerticalBox {
-                    spacing: 24px;
+                if active_side == 2 : ScrollView {
                     vertical_stretch: 1;
-                    HubCard {
-                        title: "SYSTEM METADATA";
-                        VerticalBox {
-                            spacing: 16px;
-                            HorizontalBox { Text { text: "Kernel Version:"; color: Theme.text_muted; width: 200px; } Text { text: kernel; color: Theme.text_main; } }
-                            HorizontalBox { Text { text: "System Uptime:"; color: Theme.text_muted; width: 200px; } Text { text: uptime; color: Theme.text_main; } }
-                            HorizontalBox { Text { text: "Config Path:"; color: Theme.text_muted; width: 200px; } Text { text: "~/.config/capeit/"; color: Theme.accent_cyan; } }
-                            HorizontalBox { Text { text: "Daemon Socket:"; color: Theme.text_muted; width: 200px; } Text { text: "/tmp/capeit.sock"; color: Theme.success; } }
+                    VerticalBox {
+                        spacing: 20px;
+                        padding: 0;
+                        
+                        HubCard {
+                            title: "OPERATING SYSTEM";
+                            VerticalBox {
+                                spacing: 12px;
+                                HorizontalBox { alignment: start; Text { text: "Distribution:"; color: Theme.text_muted; width: 140px; } Text { text: sys_distro; color: Theme.text_main; font_weight: 700; wrap: word-wrap; horizontal_stretch: 1; } }
+                                HorizontalBox { alignment: start; Text { text: "Desktop Env:"; color: Theme.text_muted; width: 140px; } Text { text: sys_desktop; color: Theme.text_main; wrap: word-wrap; horizontal_stretch: 1; } }
+                                HorizontalBox { alignment: start; Text { text: "Kernel Version:"; color: Theme.text_muted; width: 140px; } Text { text: sys_kernel; color: Theme.text_main; wrap: word-wrap; horizontal_stretch: 1; } }
+                            }
+                        }
+
+                        HubCard {
+                            title: "HARDWARE SPECIFICATIONS (RAW)";
+                            height: 450px;
+                            ScrollView {
+                                vertical-stretch: 1;
+                                viewport-height: raw_box.preferred-height;
+                                raw_box := VerticalBox {
+                                    padding: 10px;
+                                    raw_txt := Text {
+                                        text: root.sys_raw_info;
+                                        color: Theme.text_main;
+                                        font_size: 13px;
+                                        wrap: word-wrap;
+                                        horizontal-alignment: left;
+                                    }
+                                }
+                            }
+                        }
+
+                        HubCard {
+                            title: "CAPEIT ENVIRONMENT";
+                            VerticalBox {
+                                spacing: 12px;
+                                HorizontalBox { alignment: start; Text { text: "Uptime:"; color: Theme.text_muted; width: 140px; } Text { text: uptime; color: Theme.text_main; horizontal_stretch: 1; } }
+                                HorizontalBox { alignment: start; Text { text: "Config Path:"; color: Theme.text_muted; width: 140px; } Text { text: "~/.config/capeit/"; color: Theme.accent_cyan; horizontal_stretch: 1; } }
+                                HorizontalBox { alignment: start; Text { text: "Daemon Socket:"; color: Theme.text_muted; width: 140px; } Text { text: "/tmp/capeit.sock"; color: Theme.success; horizontal_stretch: 1; } }
+                            }
                         }
                     }
-                    Rectangle {} // Local spacer
                 }
             }
         }

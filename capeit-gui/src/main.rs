@@ -109,8 +109,124 @@ async fn main() -> Result<()> {
         }
     });
 
+    // Fetch initial system info via inxi in background
+    let ui_info_handle = ui.as_weak();
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(500)).await;
+        match fetch_inxi_data().await {
+            Ok(info) => {
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(ui) = ui_info_handle.upgrade() {
+                        ui.set_sys_distro(info.distro.into());
+                        ui.set_sys_desktop(info.desktop.into());
+                        ui.set_sys_kernel(info.kernel.into());
+                        ui.set_sys_cpu(info.cpu.into());
+                        ui.set_sys_gpu(info.gpu.into());
+                        ui.set_sys_ram(info.ram.into());
+                        ui.set_sys_model(info.model.into());
+                        ui.set_sys_raw_info(info.raw.into());
+                    }
+                });
+            }
+            Err(e) => {
+                let err_msg = format!("Failed to fetch hardware specifications: {}\n\nPlease ensure 'inxi' is installed on your system.", e);
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(ui) = ui_info_handle.upgrade() {
+                        ui.set_sys_raw_info(err_msg.into());
+                    }
+                });
+            }
+        }
+    });
+
     ui.run().context("Failed to run Slint loop")?;
     Ok(())
+}
+
+struct InxiData {
+    distro: String,
+    desktop: String,
+    kernel: String,
+    cpu: String,
+    gpu: String,
+    ram: String,
+    model: String,
+    raw: String,
+}
+
+async fn fetch_inxi_data() -> Result<InxiData> {
+    use tokio::process::Command;
+    let output = Command::new("inxi")
+        .args(["-Fxz", "-c0"]) 
+        .output().await?;
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    
+    if !output.status.success() && stdout.is_empty() {
+        anyhow::bail!("inxi failed: {}", stderr);
+    }
+
+    let mut data = InxiData {
+        distro: "Unknown".into(),
+        desktop: "Unknown".into(),
+        kernel: "Unknown".into(),
+        cpu: "Unknown".into(),
+        gpu: "Unknown".into(),
+        ram: "Unknown".into(),
+        model: "Unknown".into(),
+        raw: if stdout.is_empty() { stderr.to_string() } else { stdout.to_string() },
+    };
+
+    let mut current_section = "";
+
+    for line in stdout.lines() {
+        let trimmed = line.trim();
+        if line.starts_with("System:") { current_section = "System"; continue; }
+        if line.starts_with("Machine:") { current_section = "Machine"; continue; }
+        if line.starts_with("CPU:") { current_section = "CPU"; continue; }
+        if line.starts_with("Graphics:") { current_section = "Graphics"; continue; }
+        if line.starts_with("Info:") { current_section = "Info"; continue; }
+
+        match current_section {
+            "System" => {
+                if trimmed.contains("Kernel:") {
+                    data.kernel = trimmed.split("Kernel:").nth(1).unwrap_or("").split("arch:").next().unwrap_or("").trim().to_string();
+                }
+                if trimmed.contains("Desktop:") {
+                    data.desktop = trimmed.split("Desktop:").nth(1).unwrap_or("").split("Distro:").next().unwrap_or("").trim().to_string();
+                }
+                if trimmed.contains("Distro:") {
+                    data.distro = trimmed.split("Distro:").nth(1).unwrap_or("").split("base:").next().unwrap_or("").trim().to_string();
+                }
+            }
+            "Machine" => {
+                if trimmed.contains("product:") {
+                    data.model = trimmed.split("product:").nth(1).unwrap_or("").split("v:").next().unwrap_or("").trim().to_string();
+                }
+            }
+            "CPU" => {
+                if trimmed.contains("model:") {
+                    data.cpu = trimmed.split("model:").nth(1).unwrap_or("").split("bits:").next().unwrap_or("").trim().to_string();
+                }
+            }
+            "Graphics" => {
+                if trimmed.contains("Device-") && trimmed.contains("model:") {
+                    let g = trimmed.split("model:").nth(1).unwrap_or("").split("vendor:").next().unwrap_or("").trim().to_string();
+                    if data.gpu == "Unknown" { data.gpu = g; }
+                    else if !data.gpu.contains(&g) { data.gpu = format!("{} | {}", data.gpu, g); }
+                }
+            }
+            "Info" => {
+                if trimmed.contains("Memory:") {
+                    data.ram = trimmed.split("total:").nth(1).unwrap_or("").split("note:").next().unwrap_or("").trim().to_string();
+                }
+            }
+            _ => {}
+        }
+    }
+
+    Ok(data)
 }
 
 async fn send_action_raw(stream: &mut UnixStream, action: Action, ui_handle: &slint::Weak<AppWindow>, state: Option<&mut AppState>) -> Result<()> {
