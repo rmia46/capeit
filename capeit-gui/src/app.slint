@@ -1,4 +1,5 @@
 import { Button, VerticalBox, HorizontalBox, LineEdit, Slider, StandardListView, ScrollView } from "std-widgets.slint";
+import { IconDisplay, IconSet } from "@lucide";
 
 export global Theme {
     out property <color> bg_deep: #0B0E14;
@@ -70,8 +71,12 @@ component MiniStat inherits Rectangle {
         padding: 0; spacing: 4px;
         HorizontalBox {
             padding: 0; alignment: space_between;
-            Text { text: label; color: Theme.text_muted; font_size: 12px; }
-            Text { text: value; color: Theme.text_main; font_size: 12px; font_weight: 700; }
+            HorizontalBox {
+                spacing: 6px; alignment: start;
+                VerticalLayout { alignment: center; @children }
+                Text { text: label; color: Theme.text_muted; font_size: 12px; vertical_alignment: center; }
+            }
+            Text { text: value; color: Theme.text_main; font_size: 12px; font_weight: 700; vertical_alignment: center; }
         }
         Rectangle {
             height: 4px; background: #000000; border_radius: 2px;
@@ -98,6 +103,9 @@ component NavBtn inherits Rectangle {
         padding_left: 20px;
         spacing: 12px;
         alignment: start;
+        
+        VerticalLayout { alignment: center; @children }
+
         Text {
             text: text;
             color: active ? Theme.bg_deep : Theme.text_main;
@@ -124,6 +132,29 @@ component TabBtn inherits Rectangle {
         font_weight: active ? 700 : 400;
         horizontal_alignment: center;
         vertical_alignment: center;
+    }
+}
+
+component IconButton inherits Rectangle {
+    in property <color> icon_color: Theme.text_main;
+    in property <bool> primary: false;
+    callback clicked;
+    
+    height: 32px;
+    width: self.height;
+    border_radius: 6px;
+    background: primary ? Theme.accent_gradient : Theme.bg_sidebar;
+    border_width: 1px;
+    border_color: primary ? transparent : #30363D;
+    
+    TouchArea { clicked => { root.clicked() } }
+    
+    VerticalLayout {
+        alignment: center;
+        HorizontalLayout {
+            alignment: center;
+            @children
+        }
     }
 }
 
@@ -240,9 +271,18 @@ export component AppWindow inherits Window {
                     spacing: 20px;
                     alignment: start;
                     Text { text: "CAPEIT"; font_size: 28px; font_weight: 900; color: Theme.accent_cyan; horizontal_alignment: center; }
-                    NavBtn { text: "Dashboard"; active: active_side == 0; clicked => { active_side = 0 } }
-                    NavBtn { text: "Power Manage"; active: active_side == 1; clicked => { active_side = 1 } }
-                    NavBtn { text: "System Info"; active: active_side == 2; clicked => { active_side = 2 } }
+                    NavBtn { 
+                        text: "Dashboard"; active: active_side == 0; clicked => { active_side = 0 }
+                        IconDisplay { icon: IconSet.LayoutDashboard; stroke: active_side == 0 ? Theme.bg_deep : Theme.text_main; size: 20px; }
+                    }
+                    NavBtn { 
+                        text: "Power Manage"; active: active_side == 1; clicked => { active_side = 1 }
+                        IconDisplay { icon: IconSet.Zap; stroke: active_side == 1 ? Theme.bg_deep : Theme.text_main; size: 20px; }
+                    }
+                    NavBtn { 
+                        text: "System Info"; active: active_side == 2; clicked => { active_side = 2 }
+                        IconDisplay { icon: IconSet.Info; stroke: active_side == 2 ? Theme.bg_deep : Theme.text_main; size: 20px; }
+                    }
                     Rectangle {}
                 }
                 Rectangle { width: 1px; background: #30363D; x: parent.width - 1px; }
@@ -272,10 +312,10 @@ export component AppWindow inherits Window {
                                 HorizontalBox {
                                     spacing: 15px;
                                     VerticalBox {
-                                        width: 140px; spacing: 10px;
-                                        MiniStat { label: "USAGE"; value: "\{round(cpu_usage)}%"; progress: cpu_usage/100.0; }
-                                        MiniStat { label: "TEMPERATURE"; value: "\{round(cpu_temp)}°C"; progress: cpu_temp/100.0; bar_color: Theme.error; }
-                                        MiniStat { label: "CLOCK"; value: "\{cpu_clock}MHz"; progress: cpu_clock/5000.0; bar_color: Theme.accent_blue; }
+                                        width: 170px; spacing: 10px;
+                                        MiniStat { label: "USAGE"; value: "\{round(cpu_usage)}%"; progress: cpu_usage/100.0; IconDisplay { icon: IconSet.Gauge; stroke: Theme.text_muted; size: 12px; } }
+                                        MiniStat { label: "TEMPERATURE"; value: "\{round(cpu_temp)}°C"; progress: cpu_temp/100.0; bar_color: Theme.error; IconDisplay { icon: IconSet.Thermometer; stroke: Theme.error; size: 12px; } }
+                                        MiniStat { label: "CLOCK"; value: "\{cpu_clock}MHz"; progress: cpu_clock/5000.0; bar_color: Theme.accent_blue; IconDisplay { icon: IconSet.Activity; stroke: Theme.accent_blue; size: 12px; } }
                                     }
                                     Rectangle {
                                         background: #000000; border_radius: 8px; border_width: 1px; border_color: #30363D;
@@ -295,10 +335,10 @@ export component AppWindow inherits Window {
                                 HorizontalBox {
                                     spacing: 15px;
                                     VerticalBox {
-                                        width: 140px; spacing: 10px;
-                                        MiniStat { label: "USAGE"; value: "\{round(gpu_usage)}%"; progress: gpu_usage/100.0; }
-                                        MiniStat { label: "VRAM"; value: "\{vram_used}MB"; progress: vram_total > 0 ? vram_used/vram_total : 0; bar_color: Theme.success; }
-                                        MiniStat { label: "CLOCK"; value: "\{gpu_clock}MHz"; progress: gpu_clock/2500.0; bar_color: Theme.accent_blue; }
+                                        width: 170px; spacing: 10px;
+                                        MiniStat { label: "USAGE"; value: "\{round(gpu_usage)}%"; progress: gpu_usage/100.0; IconDisplay { icon: IconSet.Gauge; stroke: Theme.text_muted; size: 12px; } }
+                                        MiniStat { label: "VRAM"; value: "\{vram_used}MB"; progress: vram_total > 0 ? vram_used/vram_total : 0; bar_color: Theme.success; IconDisplay { icon: IconSet.HardDrive; stroke: Theme.success; size: 12px; } }
+                                        MiniStat { label: "CLOCK"; value: "\{gpu_clock}MHz"; progress: gpu_clock/2500.0; bar_color: Theme.accent_blue; IconDisplay { icon: IconSet.Activity; stroke: Theme.accent_blue; size: 12px; } }
                                     }
                                     Rectangle {
                                         background: #000000; border_radius: 8px; border_width: 1px; border_color: #30363D;
@@ -313,7 +353,7 @@ export component AppWindow inherits Window {
                     // SYSTEM HEALTH ROW
                     HubCard {
                         title: "SYSTEM HEALTH";
-                        height: 130px;
+                        height: 140px;
                         HorizontalBox {
                             padding: 0; spacing: 30px;
                             alignment: center;
@@ -322,6 +362,7 @@ export component AppWindow inherits Window {
                                 value: "\{round(ram_used*10)/10.0} / \{round(ram_total*10)/10.0} GB"; 
                                 progress: ram_total > 0 ? ram_used/ram_total : 0; 
                                 horizontal_stretch: 1; 
+                                IconDisplay { icon: IconSet.MemoryStick; stroke: Theme.accent_cyan; size: 14px; }
                             }
                             MiniStat { 
                                 label: "POWER SOURCE"; 
@@ -329,6 +370,7 @@ export component AppWindow inherits Window {
                                 progress: ac_connected ? 1.0 : 0.5; 
                                 bar_color: Theme.warning; 
                                 horizontal_stretch: 1; 
+                                IconDisplay { icon: IconSet.PlugZap; stroke: Theme.warning; size: 14px; }
                             }
                             
                             VerticalBox {
@@ -339,13 +381,17 @@ export component AppWindow inherits Window {
                                     border_radius: 8px;
                                     border_width: 1px;
                                     border_color: is_throttled ? Theme.error : Theme.success;
-                                    Text { 
-                                        text: is_throttled ? "SYSTEM THROTTLED" : "SYSTEM OPTIMAL"; 
-                                        color: is_throttled ? Theme.error : Theme.success; 
-                                        font_weight: 900; 
-                                        font_size: 11px;
-                                        horizontal_alignment: center; 
-                                        vertical_alignment: center; 
+                                    HorizontalBox {
+                                        padding: 8px; spacing: 8px; alignment: center;
+                                        if is_throttled : VerticalLayout { alignment: center; IconDisplay { icon: IconSet.ShieldAlert; stroke: Theme.error; size: 16px; } }
+                                        if !is_throttled : VerticalLayout { alignment: center; IconDisplay { icon: IconSet.ShieldCheck; stroke: Theme.success; size: 16px; } }
+                                        Text { 
+                                            text: is_throttled ? "THROTTLED" : "OPTIMAL"; 
+                                            color: is_throttled ? Theme.error : Theme.success; 
+                                            font_weight: 900; 
+                                            font_size: 11px;
+                                            vertical_alignment: center; 
+                                        }
                                     }
                                 }
                             }
@@ -355,49 +401,67 @@ export component AppWindow inherits Window {
                     // HARDWARE IDENTIFIER ROW
                     HubCard {
                         title: "HARDWARE IDENTIFIER";
-                        height: 130px;
-                        HorizontalBox {
+                        VerticalBox {
                             padding: 0; spacing: 20px;
-                            alignment: space-between;
-                            
-                            // CPU INFO
-                            VerticalBox {
-                                alignment: center; spacing: 4px; horizontal_stretch: 1;
-                                Text { text: "PROCESSOR"; color: Theme.text_muted; font_size: 10px; font_weight: 700; }
-                                Text { text: cpu_name; color: Theme.text_main; font_size: 14px; font_weight: 700; overflow: elide; }
-                                Text { text: "Limit: \{active_cpu_limit}MHz | TJ: -\{active_thermal_limit}°C"; color: Theme.text_muted; font_size: 11px; }
-                            }
-
-                            Rectangle { width: 1px; background: #30363D; height: 40px; }
-
-                            // GPU INFO
-                            VerticalBox {
-                                alignment: center; spacing: 4px; horizontal_stretch: 1;
-                                Text { text: "GRAPHICS"; color: Theme.text_muted; font_size: 10px; font_weight: 700; }
-                                Text { text: gpu_name; color: Theme.text_main; font_size: 14px; font_weight: 700; overflow: elide; }
-                                Text { text: "Limit: \{active_gpu_limit}MHz | Temp: \{active_gpu_temp_limit}°C"; color: Theme.text_muted; font_size: 11px; }
-                            }
-
-                            Rectangle { width: 1px; background: #30363D; height: 40px; }
-
-                            // ACTIVE PROFILES (Horizontal Stack)
-                            VerticalBox {
-                                alignment: center; spacing: 8px; horizontal_stretch: 1;
-                                Text { text: "ACTIVE PROFILES"; color: Theme.text_muted; font_size: 10px; font_weight: 700; }
-                                HorizontalBox {
-                                    spacing: 8px;
-                                    alignment: center;
-                                    Rectangle { 
-                                        background: Theme.accent_blue.with-alpha(0.15); 
-                                        border_radius: 4px; border_width: 1px; border_color: Theme.accent_blue; 
-                                        height: 26px; horizontal_stretch: 1; min-width: 100px;
-                                        HorizontalBox { padding: 4px; Text { text: active_power; color: Theme.accent_blue; font_weight: 700; font_size: 11px; horizontal_alignment: center; vertical_alignment: center; } } 
+                            HorizontalBox {
+                                padding: 0; spacing: 20px;
+                                alignment: space-between;
+                                
+                                // CPU INFO
+                                VerticalBox {
+                                    alignment: center; spacing: 4px; horizontal_stretch: 1;
+                                    HorizontalBox {
+                                        spacing: 6px; alignment: center;
+                                        VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Cpu; stroke: Theme.text_muted; size: 12px; } }
+                                        Text { text: "PROCESSOR"; color: Theme.text_muted; font_size: 10px; font_weight: 700; vertical_alignment: center; }
                                     }
-                                    Rectangle { 
-                                        background: Theme.accent_cyan.with-alpha(0.15); 
-                                        border_radius: 4px; border_width: 1px; border_color: Theme.accent_cyan; 
-                                        height: 26px; horizontal_stretch: 1; min-width: 100px;
-                                        HorizontalBox { padding: 4px; Text { text: active_thermal; color: Theme.accent_cyan; font_weight: 700; font_size: 11px; horizontal_alignment: center; vertical_alignment: center; } } 
+                                    Text { text: cpu_name; color: Theme.text_main; font_size: 14px; font_weight: 700; overflow: elide; }
+                                    Text { text: "Limit: \{active_cpu_limit}MHz | TJ: -\{active_thermal_limit}°C"; color: Theme.text_muted; font_size: 11px; }
+                                }
+
+                                Rectangle { width: 1px; background: #30363D; height: 40px; }
+
+                                // GPU INFO
+                                VerticalBox {
+                                    alignment: center; spacing: 4px; horizontal_stretch: 1;
+                                    HorizontalBox {
+                                        spacing: 6px; alignment: center;
+                                        VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Monitor; stroke: Theme.text_muted; size: 12px; } }
+                                        Text { text: "GRAPHICS"; color: Theme.text_muted; font_size: 10px; font_weight: 700; vertical_alignment: center; }
+                                    }
+                                    Text { text: gpu_name; color: Theme.text_main; font_size: 14px; font_weight: 700; overflow: elide; }
+                                    Text { text: "Limit: \{active_gpu_limit}MHz | Temp: \{active_gpu_temp_limit}°C"; color: Theme.text_muted; font_size: 11px; }
+                                }
+
+                                Rectangle { width: 1px; background: #30363D; height: 40px; }
+
+                                // ACTIVE PROFILES (Horizontal Stack)
+                                VerticalBox {
+                                    alignment: center; spacing: 8px; horizontal_stretch: 1;
+                                    Text { text: "ACTIVE PROFILES"; color: Theme.text_muted; font_size: 10px; font_weight: 700; }
+                                    HorizontalBox {
+                                        spacing: 8px;
+                                        alignment: center;
+                                        Rectangle { 
+                                            background: Theme.accent_blue.with-alpha(0.15); 
+                                            border_radius: 4px; border_width: 1px; border_color: Theme.accent_blue; 
+                                            height: 26px; horizontal_stretch: 1; min-width: 100px;
+                                            HorizontalBox { 
+                                                padding: 4px; spacing: 6px; alignment: center;
+                                                VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Zap; stroke: Theme.accent_blue; size: 12px; } }
+                                                Text { text: active_power; color: Theme.accent_blue; font_weight: 700; font_size: 11px; vertical_alignment: center; } 
+                                            } 
+                                        }
+                                        Rectangle { 
+                                            background: Theme.accent_cyan.with-alpha(0.15); 
+                                            border_radius: 4px; border_width: 1px; border_color: Theme.accent_cyan; 
+                                            height: 26px; horizontal_stretch: 1; min-width: 100px;
+                                            HorizontalBox { 
+                                                padding: 4px; spacing: 6px; alignment: center;
+                                                VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Flame; stroke: Theme.accent_cyan; size: 12px; } }
+                                                Text { text: active_thermal; color: Theme.accent_cyan; font_weight: 700; font_size: 11px; vertical_alignment: center; } 
+                                            } 
+                                        }
                                     }
                                 }
                             }
@@ -418,12 +482,18 @@ export component AppWindow inherits Window {
                             TabBtn { text: "Thermal Profiles"; active: active_tab == 1; clicked => { active_tab = 1 } }
                             TabBtn { text: "Manual Overrides"; active: active_tab == 2; clicked => { active_tab = 2 } }
                         }
-                        Button { 
-                            text: "+ New Profile";
+                        IconButton {
+                            primary: true;
+                            width: 140px;
                             clicked => { 
                                 current_name = ""; current_cpu = "3000"; current_gpu = "1800"; current_ps = "45"; current_pl = "35";
                                 is_editing = false; show_create_modal = true; 
-                            } 
+                            }
+                            HorizontalBox {
+                                spacing: 8px;
+                                VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Plus; size: 16px; stroke: Theme.bg_deep; } }
+                                Text { text: "NEW PROFILE"; color: Theme.bg_deep; font_weight: 800; font_size: 11px; vertical_alignment: center; }
+                            }
                         }
                     }
 
@@ -448,13 +518,24 @@ export component AppWindow inherits Window {
                                     }
                                     HorizontalBox {
                                         spacing: 8px;
-                                        Button { text: "Apply"; clicked => { root.apply_power(p.name) } }
-                                        if !p.is_system : Button { text: "Edit"; clicked => { 
-                                            current_name = p.name; current_cpu = "\{p.cpu_mhz}"; current_gpu = "\{p.gpu_mhz}"; 
-                                            current_ps = "\{p.p_short}"; current_pl = "\{p.p_long}"; 
-                                            is_editing = true; show_create_modal = true; 
-                                        } }
-                                        if !p.is_system : Button { text: "Delete"; clicked => { root.delete_power(p.name) } }
+                                        IconButton { 
+                                            primary: active_power == p.name;
+                                            clicked => { root.apply_power(p.name) } 
+                                            IconDisplay { icon: IconSet.Check; stroke: active_power == p.name ? Theme.bg_deep : Theme.text_main; size: 18px; }
+                                        }
+                                        if !p.is_system : IconButton { 
+                                            clicked => { 
+                                                current_name = p.name; current_cpu = "\{p.cpu_mhz}"; current_gpu = "\{p.gpu_mhz}"; 
+                                                current_ps = "\{p.p_short}"; current_pl = "\{p.p_long}"; 
+                                                is_editing = true; show_create_modal = true; 
+                                            } 
+                                            IconDisplay { icon: IconSet.Pencil; stroke: Theme.text_main; size: 16px; }
+                                        }
+                                        if !p.is_system : IconButton { 
+                                            icon_color: Theme.error;
+                                            clicked => { root.delete_power(p.name) } 
+                                            IconDisplay { icon: IconSet.Trash2; stroke: Theme.error; size: 16px; }
+                                        }
                                     }
                                 }
                             }
@@ -476,7 +557,11 @@ export component AppWindow inherits Window {
                                     }
                                     Rectangle {}
                                     Text { text: "TJ Offset: -\{t.tj_offset}°C | GPU Limit: \{t.gpu_limit}°C"; color: Theme.text_main; font_size: 12px; vertical_alignment: center; }
-                                    Button { text: "Apply"; clicked => { root.apply_thermal(t.name) } }
+                                    IconButton { 
+                                        primary: active_thermal == t.name;
+                                        clicked => { root.apply_thermal(t.name) } 
+                                        IconDisplay { icon: IconSet.Check; stroke: active_thermal == t.name ? Theme.bg_deep : Theme.text_main; size: 18px; }
+                                    }
                                 }
                             }
                         }
@@ -490,27 +575,27 @@ export component AppWindow inherits Window {
                             VerticalBox {
                                 spacing: 20px;
                                 VerticalBox {
-                                    Text { text: "CPU Max Clock (MHz)"; color: Theme.text_muted; }
+                                    HorizontalBox { spacing: 6px; alignment: start; VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Cpu; size: 14px; stroke: Theme.text_muted; } } Text { text: "CPU Max Clock (MHz)"; color: Theme.text_muted; vertical_alignment: center; } }
                                     HorizontalBox {
                                         s1 := Slider { minimum: 800; maximum: 5000; value <=> root.manual_cpu_val; }
                                         Text { text: "\{round(s1.value)}"; color: Theme.text_main; width: 60px; }
-                                        Button { text: "Set"; clicked => { root.set_manual("cpu", round(s1.value)) } }
+                                        IconButton { primary: true; clicked => { root.set_manual("cpu", round(s1.value)) } IconDisplay { icon: IconSet.Save; size: 16px; stroke: Theme.bg_deep; } }
                                     }
                                 }
                                 VerticalBox {
-                                    Text { text: "Thermal Offset (-°C)"; color: Theme.text_muted; }
+                                    HorizontalBox { spacing: 6px; alignment: start; VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Thermometer; size: 14px; stroke: Theme.text_muted; } } Text { text: "Thermal Offset (-°C)"; color: Theme.text_muted; vertical_alignment: center; } }
                                     HorizontalBox {
                                         s2 := Slider { minimum: 0; maximum: 30; value <=> root.manual_thermal_val; }
                                         Text { text: "-\{round(s2.value)}"; color: Theme.text_main; width: 60px; }
-                                        Button { text: "Set"; clicked => { root.set_manual("thermal", round(s2.value)) } }
+                                        IconButton { primary: true; clicked => { root.set_manual("thermal", round(s2.value)) } IconDisplay { icon: IconSet.Save; size: 16px; stroke: Theme.bg_deep; } }
                                     }
                                 }
                                 VerticalBox {
-                                    Text { text: "GPU Temp Limit (°C)"; color: Theme.text_muted; }
+                                    HorizontalBox { spacing: 6px; alignment: start; VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Monitor; size: 14px; stroke: Theme.text_muted; } } Text { text: "GPU Temp Limit (°C)"; color: Theme.text_muted; vertical_alignment: center; } }
                                     HorizontalBox {
                                         s3 := Slider { minimum: 60; maximum: 95; value <=> root.manual_gpu_temp_val; }
                                         Text { text: "\{round(s3.value)}"; color: Theme.text_main; width: 60px; }
-                                        Button { text: "Set"; clicked => { root.set_manual("gputemp", round(s3.value)) } }
+                                        IconButton { primary: true; clicked => { root.set_manual("gputemp", round(s3.value)) } IconDisplay { icon: IconSet.Save; size: 16px; stroke: Theme.bg_deep; } }
                                     }
                                 }
                             }
@@ -530,26 +615,42 @@ export component AppWindow inherits Window {
                             title: "OPERATING SYSTEM";
                             VerticalBox {
                                 spacing: 12px;
-                                HorizontalBox { alignment: start; Text { text: "Distribution:"; color: Theme.text_muted; width: 140px; } Text { text: sys_distro; color: Theme.text_main; font_weight: 700; wrap: word-wrap; horizontal_stretch: 1; } }
-                                HorizontalBox { alignment: start; Text { text: "Desktop Env:"; color: Theme.text_muted; width: 140px; } Text { text: sys_desktop; color: Theme.text_main; wrap: word-wrap; horizontal_stretch: 1; } }
-                                HorizontalBox { alignment: start; Text { text: "Kernel Version:"; color: Theme.text_muted; width: 140px; } Text { text: sys_kernel; color: Theme.text_main; wrap: word-wrap; horizontal_stretch: 1; } }
+                                HorizontalBox { 
+                                    spacing: 8px; alignment: start;
+                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Monitor; size: 16px; stroke: Theme.accent_cyan; } }
+                                    HorizontalBox { alignment: start; Text { text: "Distribution:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: sys_distro; color: Theme.text_main; font_weight: 700; wrap: word-wrap; horizontal_stretch: 1; vertical_alignment: center; } }
+                                }
+                                HorizontalBox { 
+                                    spacing: 8px; alignment: start;
+                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Settings; size: 16px; stroke: Theme.text_muted; } }
+                                    HorizontalBox { alignment: start; Text { text: "Desktop Env:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: sys_desktop; color: Theme.text_main; wrap: word-wrap; horizontal_stretch: 1; vertical_alignment: center; } }
+                                }
+                                HorizontalBox { 
+                                    spacing: 8px; alignment: start;
+                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Activity; size: 16px; stroke: Theme.text_muted; } }
+                                    HorizontalBox { alignment: start; Text { text: "Kernel Version:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: sys_kernel; color: Theme.text_main; wrap: word-wrap; horizontal_stretch: 1; vertical_alignment: center; } }
+                                }
                             }
                         }
 
                         HubCard {
                             title: "HARDWARE SPECIFICATIONS (RAW)";
                             height: 450px;
-                            ScrollView {
-                                vertical-stretch: 1;
-                                viewport-height: raw_box.preferred-height;
-                                raw_box := VerticalBox {
-                                    padding: 10px;
-                                    raw_txt := Text {
-                                        text: root.sys_raw_info;
-                                        color: Theme.text_main;
-                                        font_size: 13px;
-                                        wrap: word-wrap;
-                                        horizontal-alignment: left;
+                            VerticalBox {
+                                padding: 0; spacing: 8px;
+                                HorizontalBox { spacing: 8px; alignment: start; VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Cpu; size: 16px; stroke: Theme.accent_blue; } } Text { text: "DETAILED REPORT"; color: Theme.text_muted; font_size: 10px; font_weight: 700; vertical_alignment: center; } }
+                                ScrollView {
+                                    vertical_stretch: 1;
+                                    viewport-height: raw_box.preferred-height;
+                                    raw_box := VerticalBox {
+                                        padding: 10px;
+                                        raw_txt := Text {
+                                            text: root.sys_raw_info;
+                                            color: Theme.text_main;
+                                            font_size: 13px;
+                                            wrap: word-wrap;
+                                            horizontal-alignment: left;
+                                        }
                                     }
                                 }
                             }
@@ -559,9 +660,21 @@ export component AppWindow inherits Window {
                             title: "CAPEIT ENVIRONMENT";
                             VerticalBox {
                                 spacing: 12px;
-                                HorizontalBox { alignment: start; Text { text: "Uptime:"; color: Theme.text_muted; width: 140px; } Text { text: uptime; color: Theme.text_main; horizontal_stretch: 1; } }
-                                HorizontalBox { alignment: start; Text { text: "Config Path:"; color: Theme.text_muted; width: 140px; } Text { text: "~/.config/capeit/"; color: Theme.accent_cyan; horizontal_stretch: 1; } }
-                                HorizontalBox { alignment: start; Text { text: "Daemon Socket:"; color: Theme.text_muted; width: 140px; } Text { text: "/tmp/capeit.sock"; color: Theme.success; horizontal_stretch: 1; } }
+                                HorizontalBox { 
+                                    spacing: 8px; alignment: start;
+                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Info; size: 16px; stroke: Theme.success; } }
+                                    HorizontalBox { alignment: start; Text { text: "Uptime:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: uptime; color: Theme.text_main; horizontal_stretch: 1; vertical_alignment: center; } }
+                                }
+                                HorizontalBox { 
+                                    spacing: 8px; alignment: start;
+                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.HardDrive; size: 16px; stroke: Theme.text_muted; } }
+                                    HorizontalBox { alignment: start; Text { text: "Config Path:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: "~/.config/capeit/"; color: Theme.accent_cyan; horizontal_stretch: 1; vertical_alignment: center; } }
+                                }
+                                HorizontalBox { 
+                                    spacing: 8px; alignment: start;
+                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Zap; size: 16px; stroke: Theme.text_muted; } }
+                                    HorizontalBox { alignment: start; Text { text: "Daemon Socket:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: "/tmp/capeit.sock"; color: Theme.success; horizontal_stretch: 1; vertical_alignment: center; } }
+                                }
                             }
                         }
                     }
@@ -602,13 +715,18 @@ export component AppWindow inherits Window {
                             }
                             HorizontalBox {
                                 spacing: 16px; alignment: end;
-                                Button { text: "CANCEL"; clicked => { show_create_modal = false } }
-                                Button { 
-                                    text: is_editing ? "UPDATE" : "SAVE"; primary: true;
+                                IconButton { 
+                                    width: 100px;
+                                    clicked => { show_create_modal = false } 
+                                    HorizontalBox { spacing: 6px; alignment: center; VerticalLayout { alignment: center; IconDisplay { icon: IconSet.X; size: 14px; stroke: Theme.text_main; } } Text { text: "CANCEL"; font_weight: 700; font_size: 11px; vertical_alignment: center; } }
+                                }
+                                IconButton { 
+                                    primary: true; width: 100px;
                                     clicked => {
                                         root.save_power({ name: current_name, description: "Custom performance profile", cpu_mhz: current_cpu.to_float(), gpu_mhz: current_gpu.to_float(), p_short: current_ps.to_float(), p_long: current_pl.to_float(), is_system: false });
                                         show_create_modal = false;
                                     }
+                                    HorizontalBox { spacing: 6px; alignment: center; VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Save; size: 14px; stroke: Theme.bg_deep; } } Text { text: is_editing ? "UPDATE" : "SAVE"; color: Theme.bg_deep; font_weight: 800; font_size: 11px; vertical_alignment: center; } }
                                 }
                             }
                         }
