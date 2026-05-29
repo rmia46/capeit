@@ -1,0 +1,524 @@
+import { Button, VerticalBox, HorizontalBox, LineEdit, Slider, StandardListView, ScrollView } from "std-widgets.slint";
+
+export global Theme {
+    out property <color> bg_deep: #0B0E14;
+    out property <color> bg_card: #161B22;
+    out property <color> bg_sidebar: #0D1117;
+    out property <color> accent_cyan: #00E5FF;
+    out property <color> accent_blue: #2979FF;
+    out property <color> text_main: #FFFFFF;
+    out property <color> text_muted: #8B949E;
+    out property <color> success: #00E676;
+    out property <color> warning: #FFAB00;
+    out property <color> error: #FF1744;
+    out property <length> radius: 12px;
+    
+    out property <brush> card_gradient: @linear-gradient(135deg, #1A1F26 0%, #13171D 100%);
+    out property <brush> accent_gradient: @linear-gradient(135deg, #00E5FF 0%, #2979FF 100%);
+    out property <brush> overlay_bg: #1a1e26aa;
+}
+
+export struct PowerProfileUI {
+    name: string,
+    description: string,
+    cpu_mhz: int,
+    gpu_mhz: int,
+    p_short: int,
+    p_long: int,
+    is_system: bool,
+}
+
+export struct ThermalProfileUI {
+    name: string,
+    description: string,
+    tj_offset: int,
+    gpu_limit: int,
+    is_system: bool,
+}
+
+component Card inherits Rectangle {
+    background: Theme.card_gradient;
+    border_radius: Theme.radius;
+    border_width: 1px;
+    border_color: #30363D;
+}
+
+component HubCard inherits Rectangle {
+    in property <string> title;
+    background: Theme.card_gradient;
+    border_radius: Theme.radius;
+    border_width: 1px;
+    border_color: #30363D;
+    
+    VerticalBox {
+        padding: 16px;
+        spacing: 12px;
+        alignment: start;
+        Text { text: title; color: Theme.text_muted; font_size: 14px; font_weight: 700; }
+        @children
+    }
+}
+
+component MiniStat inherits Rectangle {
+    in property <string> label;
+    in property <string> value;
+    in property <float> progress;
+    in property <color> bar_color: Theme.accent_cyan;
+
+    height: 60px;
+    
+    VerticalBox {
+        padding: 0; spacing: 4px;
+        HorizontalBox {
+            padding: 0; alignment: space_between;
+            Text { text: label; color: Theme.text_muted; font_size: 12px; }
+            Text { text: value; color: Theme.text_main; font_size: 12px; font_weight: 700; }
+        }
+        Rectangle {
+            height: 4px; background: #000000; border_radius: 2px;
+            Rectangle {
+                x: 0; width: parent.width * Math.max(0, Math.min(1, progress));
+                background: root.bar_color; border_radius: 2px;
+            }
+        }
+    }
+}
+
+component NavBtn inherits Rectangle {
+    in property <string> text;
+    in property <bool> active;
+    callback clicked;
+
+    height: 50px;
+    background: active ? Theme.accent_gradient : transparent;
+    border_radius: Theme.radius;
+    
+    TouchArea { clicked => { root.clicked() } }
+    
+    HorizontalBox {
+        padding_left: 20px;
+        spacing: 12px;
+        alignment: start;
+        Text {
+            text: text;
+            color: active ? Theme.bg_deep : Theme.text_main;
+            font_weight: 700;
+            vertical-alignment: center;
+        }
+    }
+}
+
+component TabBtn inherits Rectangle {
+    in property <string> text;
+    in property <bool> active;
+    callback clicked;
+
+    height: 35px;
+    background: active ? Theme.bg_card : transparent;
+    border_radius: 6px;
+    
+    TouchArea { clicked => { root.clicked() } }
+    
+    Text { 
+        text: text; 
+        color: Theme.text_main; 
+        font_weight: active ? 700 : 400;
+        horizontal_alignment: center;
+        vertical_alignment: center;
+    }
+}
+
+component Modal inherits Rectangle {
+    background: Theme.overlay_bg;
+    TouchArea {} // consume clicks
+}
+
+component Toast inherits Rectangle {
+    in property <string> text;
+    in property <bool> is_error;
+    
+    background: is_error ? Theme.error : Theme.bg_sidebar;
+    border_radius: 8px;
+    height: 50px;
+    width: 300px;
+    
+    Text {
+        text: text;
+        color: Theme.text_main;
+        font_weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "Capeit - Performance Studio";
+    min-width: 850px;
+    min-height: 600px;
+    background: Theme.bg_deep;
+
+    // Telemetry
+    in property <string> cpu_name: "";
+    in property <string> gpu_name: "";
+    in property <float> cpu_temp: 0;
+    in property <float> gpu_temp: 0;
+    in property <int> cpu_clock: 0;
+    in property <int> gpu_clock: 0;
+    in property <float> cpu_usage: 0;
+    in property <float> gpu_usage: 0;
+    in property <int> vram_used: 0;
+    in property <int> vram_total: 0;
+    in property <float> ram_used: 0;
+    in property <float> ram_total: 0;
+    in property <string> uptime: "";
+    in property <string> kernel: "";
+    in property <bool> ac_connected: true;
+    in property <string> active_power: "";
+    in property <string> active_thermal: "";
+    in property <bool> is_throttled: false;
+    
+    // Active Limits
+    in property <int> active_cpu_limit: 0;
+    in property <int> active_gpu_limit: 0;
+    in property <int> active_thermal_limit: 0;
+    in property <int> active_gpu_temp_limit: 0;
+    
+    in property <string> toast_msg: "";
+    in property <bool> show_toast: false;
+    in property <bool> toast_is_error: false;
+    
+    // Config
+    in property <[PowerProfileUI]> power_profiles: [];
+    in property <[ThermalProfileUI]> thermal_profiles: [];
+    
+    // Dynamic Graphs
+    in property <image> cpu_graph;
+    in property <image> gpu_graph;
+
+    property <int> active_side: 0;
+    property <int> active_tab: 0;
+    property <bool> show_create_modal: false;
+    
+    // Modal state
+    property <bool> is_editing: false;
+    property <string> current_name: "";
+    property <string> current_cpu: "3000";
+    property <string> current_gpu: "1800";
+    property <string> current_ps: "45";
+    property <string> current_pl: "35";
+
+    // Decoupled slider states
+    in-out property <float> manual_cpu_val: 3000;
+    in-out property <float> manual_thermal_val: 5;
+    in-out property <float> manual_gpu_temp_val: 80;
+
+    callback apply_power(string);
+    callback apply_thermal(string);
+    callback delete_power(string);
+    callback save_power(PowerProfileUI);
+    callback set_manual(string, int);
+
+    Rectangle {
+        HorizontalBox {
+            padding: 0; spacing: 0;
+
+            // SIDEBAR
+            Rectangle {
+                width: 220px;
+                background: Theme.bg_sidebar;
+                VerticalBox {
+                    padding: 20px;
+                    spacing: 20px;
+                    alignment: start;
+                    Text { text: "CAPEIT"; font_size: 28px; font_weight: 900; color: Theme.accent_cyan; horizontal_alignment: center; }
+                    NavBtn { text: "Dashboard"; active: active_side == 0; clicked => { active_side = 0 } }
+                    NavBtn { text: "Power Manage"; active: active_side == 1; clicked => { active_side = 1 } }
+                    NavBtn { text: "System Info"; active: active_side == 2; clicked => { active_side = 2 } }
+                    Rectangle {}
+                }
+                Rectangle { width: 1px; background: #30363D; x: parent.width - 1px; }
+            }
+
+            // MAIN CONTENT
+            VerticalBox {
+                padding: 25px; spacing: 20px;
+
+                // DASHBOARD
+                if active_side == 0 : VerticalBox {
+                    spacing: 20px;
+                    vertical_stretch: 1;
+                    
+                    // TOP HUB ROW
+                    HorizontalBox {
+                        spacing: 20px;
+                        vertical_stretch: 1;
+                        
+                        // CPU HUB
+                        HubCard {
+                            title: "CPU CORE HUB";
+                            horizontal_stretch: 1;
+                            VerticalBox {
+                                padding: 0; spacing: 15px;
+                                HorizontalBox {
+                                    spacing: 15px;
+                                    VerticalBox {
+                                        width: 140px; spacing: 10px;
+                                        MiniStat { label: "USAGE"; value: "\{round(cpu_usage)}%"; progress: cpu_usage/100.0; }
+                                        MiniStat { label: "TEMPERATURE"; value: "\{round(cpu_temp)}°C"; progress: cpu_temp/100.0; bar_color: Theme.error; }
+                                        MiniStat { label: "CLOCK"; value: "\{cpu_clock}MHz"; progress: cpu_clock/5000.0; bar_color: Theme.accent_blue; }
+                                    }
+                                    Rectangle {
+                                        background: #000000; border_radius: 8px; border_width: 1px; border_color: #30363D;
+                                        horizontal_stretch: 1;
+                                        Image { source: cpu_graph; width: 100%; height: 100%; image_fit: fill; image_rendering: smooth; }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // GPU HUB
+                        HubCard {
+                            title: "GPU GRAPHICS HUB";
+                            horizontal_stretch: 1;
+                            VerticalBox {
+                                padding: 0; spacing: 15px;
+                                HorizontalBox {
+                                    spacing: 15px;
+                                    VerticalBox {
+                                        width: 140px; spacing: 10px;
+                                        MiniStat { label: "USAGE"; value: "\{round(gpu_usage)}%"; progress: gpu_usage/100.0; }
+                                        MiniStat { label: "VRAM"; value: "\{vram_used}MB"; progress: vram_total > 0 ? vram_used/vram_total : 0; bar_color: Theme.success; }
+                                        MiniStat { label: "CLOCK"; value: "\{gpu_clock}MHz"; progress: gpu_clock/2500.0; bar_color: Theme.accent_blue; }
+                                    }
+                                    Rectangle {
+                                        background: #000000; border_radius: 8px; border_width: 1px; border_color: #30363D;
+                                        horizontal_stretch: 1;
+                                        Image { source: gpu_graph; width: 100%; height: 100%; image_fit: fill; image_rendering: smooth; }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // BOTTOM ROW
+                    HorizontalBox {
+                        spacing: 20px;
+                        height: 180px;
+                        HubCard {
+                            title: "SYSTEM HEALTH";
+                            horizontal_stretch: 1.5;
+                            HorizontalBox {
+                                spacing: 30px;
+                                alignment: center;
+                                MiniStat { label: "RAM"; value: "\{round(ram_used*10)/10.0}GB"; progress: ram_total > 0 ? ram_used/ram_total : 0; width: 120px; }
+                                MiniStat { label: "POWER"; value: ac_connected ? "AC" : "BATT"; progress: ac_connected ? 1.0 : 0.5; bar_color: Theme.warning; width: 120px; }
+                                
+                                Rectangle {
+                                    width: 140px; height: 45px;
+                                    background: is_throttled ? Theme.error : Theme.success;
+                                    border_radius: 8px;
+                                    Text { text: is_throttled ? "THROTTLED" : "OPTIMAL"; color: Theme.bg_deep; font_weight: 900; horizontal_alignment: center; vertical_alignment: center; }
+                                }
+                            }
+                        }
+                        HubCard {
+                            title: "HARDWARE IDENTIFIER";
+                            horizontal_stretch: 1;
+                            VerticalBox {
+                                padding: 0; alignment: center; spacing: 4px;
+                                Text { text: cpu_name; color: Theme.text_main; font_size: 15px; font_weight: 700; overflow: elide; }
+                                Text { text: "Limit: \{active_cpu_limit}MHz | TJ: -\{active_thermal_limit}°C"; color: Theme.text_muted; font_size: 11px; }
+                                Text { text: gpu_name; color: Theme.text_muted; font_size: 13px; overflow: elide; }
+                                Text { text: "Limit: \{active_gpu_limit}MHz | Temp: \{active_gpu_temp_limit}°C"; color: Theme.text_muted; font_size: 11px; }
+                                HorizontalBox {
+                                    padding: 0; spacing: 10px;
+                                    Rectangle { background: Theme.accent_blue; border_radius: 4px; height: 22px; HorizontalBox { padding: 5px; Text { text: active_power; color: white; font_weight: 700; font_size: 11px; } } }
+                                    Rectangle { background: Theme.accent_cyan; border_radius: 4px; height: 22px; HorizontalBox { padding: 5px; Text { text: active_thermal; color: Theme.bg_deep; font_weight: 700; font_size: 11px; } } }
+                                }
+                            }
+                        }
+                    }
+                    Rectangle {} // Local spacer for dashboard top-alignment
+                }
+
+                // POWER MANAGE
+                if active_side == 1 : VerticalBox {
+                    spacing: 20px;
+                    vertical_stretch: 1;
+                    HorizontalBox {
+                        alignment: space-between;
+                        HorizontalBox {
+                            height: 45px; spacing: 8px;
+                            TabBtn { text: "Power Profiles"; active: active_tab == 0; clicked => { active_tab = 0 } }
+                            TabBtn { text: "Thermal Profiles"; active: active_tab == 1; clicked => { active_tab = 1 } }
+                            TabBtn { text: "Manual Overrides"; active: active_tab == 2; clicked => { active_tab = 2 } }
+                        }
+                        Button { 
+                            text: "+ New Profile";
+                            clicked => { 
+                                current_name = ""; current_cpu = "3000"; current_gpu = "1800"; current_ps = "45"; current_pl = "35";
+                                is_editing = false; show_create_modal = true; 
+                            } 
+                        }
+                    }
+
+                    if active_tab == 0 : ScrollView {
+                        vertical_stretch: 1;
+                        VerticalBox {
+                            spacing: 12px;
+                            for p in power_profiles : Card {
+                                height: 90px;
+                                HorizontalBox {
+                                    padding: 16px;
+                                    VerticalBox {
+                                        alignment: center;
+                                        Text { text: p.name; color: active_power == p.name ? Theme.accent_cyan : Theme.text_main; font_weight: 700; font_size: 16px; }
+                                        Text { text: p.description; color: Theme.text_muted; font_size: 12px; }
+                                    }
+                                    Rectangle {}
+                                    VerticalBox {
+                                        alignment: center;
+                                        Text { text: "CPU: \{p.cpu_mhz}MHz | GPU: \{p.gpu_mhz}MHz"; color: Theme.text_main; font_size: 12px; }
+                                        Text { text: "Power: \{p.p_short}W / \{p.p_long}W"; color: Theme.text_muted; font_size: 11px; }
+                                    }
+                                    HorizontalBox {
+                                        spacing: 8px;
+                                        Button { text: "Apply"; clicked => { root.apply_power(p.name) } }
+                                        if !p.is_system : Button { text: "Edit"; clicked => { 
+                                            current_name = p.name; current_cpu = "\{p.cpu_mhz}"; current_gpu = "\{p.gpu_mhz}"; 
+                                            current_ps = "\{p.p_short}"; current_pl = "\{p.p_long}"; 
+                                            is_editing = true; show_create_modal = true; 
+                                        } }
+                                        if !p.is_system : Button { text: "Delete"; clicked => { root.delete_power(p.name) } }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if active_tab == 1 : ScrollView {
+                        vertical_stretch: 1;
+                        VerticalBox {
+                            spacing: 12px;
+                            for t in thermal_profiles : Card {
+                                height: 80px;
+                                HorizontalBox {
+                                    padding: 16px;
+                                    VerticalBox {
+                                        alignment: center;
+                                        Text { text: t.name; color: active_thermal == t.name ? Theme.accent_cyan : Theme.text_main; font_weight: 700; font_size: 16px; }
+                                        Text { text: t.description; color: Theme.text_muted; font_size: 12px; }
+                                    }
+                                    Rectangle {}
+                                    Text { text: "TJ Offset: -\{t.tj_offset}°C | GPU Limit: \{t.gpu_limit}°C"; color: Theme.text_main; font_size: 12px; vertical_alignment: center; }
+                                    Button { text: "Apply"; clicked => { root.apply_thermal(t.name) } }
+                                }
+                            }
+                        }
+                    }
+
+                    if active_tab == 2 : VerticalBox {
+                        vertical_stretch: 1;
+                        spacing: 20px;
+                        HubCard {
+                            title: "MANUAL OVERRIDES";
+                            VerticalBox {
+                                spacing: 20px;
+                                VerticalBox {
+                                    Text { text: "CPU Max Clock (MHz)"; color: Theme.text_muted; }
+                                    HorizontalBox {
+                                        s1 := Slider { minimum: 800; maximum: 5000; value <=> root.manual_cpu_val; }
+                                        Text { text: "\{round(s1.value)}"; color: Theme.text_main; width: 60px; }
+                                        Button { text: "Set"; clicked => { root.set_manual("cpu", round(s1.value)) } }
+                                    }
+                                }
+                                VerticalBox {
+                                    Text { text: "Thermal Offset (-°C)"; color: Theme.text_muted; }
+                                    HorizontalBox {
+                                        s2 := Slider { minimum: 0; maximum: 30; value <=> root.manual_thermal_val; }
+                                        Text { text: "-\{round(s2.value)}"; color: Theme.text_main; width: 60px; }
+                                        Button { text: "Set"; clicked => { root.set_manual("thermal", round(s2.value)) } }
+                                    }
+                                }
+                                VerticalBox {
+                                    Text { text: "GPU Temp Limit (°C)"; color: Theme.text_muted; }
+                                    HorizontalBox {
+                                        s3 := Slider { minimum: 60; maximum: 95; value <=> root.manual_gpu_temp_val; }
+                                        Text { text: "\{round(s3.value)}"; color: Theme.text_main; width: 60px; }
+                                        Button { text: "Set"; clicked => { root.set_manual("gputemp", round(s3.value)) } }
+                                    }
+                                }
+                            }
+                        }
+                        Rectangle {} // Local spacer for manual tab
+                    }
+                }
+
+                // SYSTEM INFO
+                if active_side == 2 : VerticalBox {
+                    spacing: 24px;
+                    vertical_stretch: 1;
+                    HubCard {
+                        title: "SYSTEM METADATA";
+                        VerticalBox {
+                            spacing: 16px;
+                            HorizontalBox { Text { text: "Kernel Version:"; color: Theme.text_muted; width: 200px; } Text { text: kernel; color: Theme.text_main; } }
+                            HorizontalBox { Text { text: "System Uptime:"; color: Theme.text_muted; width: 200px; } Text { text: uptime; color: Theme.text_main; } }
+                            HorizontalBox { Text { text: "Config Path:"; color: Theme.text_muted; width: 200px; } Text { text: "~/.config/capeit/"; color: Theme.accent_cyan; } }
+                            HorizontalBox { Text { text: "Daemon Socket:"; color: Theme.text_muted; width: 200px; } Text { text: "/tmp/capeit.sock"; color: Theme.success; } }
+                        }
+                    }
+                    Rectangle {} // Local spacer
+                }
+            }
+        }
+
+        // Toast Overlay
+        if show_toast : VerticalBox {
+            alignment: end; padding_bottom: 20px;
+            HorizontalBox { alignment: center; Toast { text: toast_msg; is_error: toast_is_error; } }
+        }
+
+        // Modal Overlay
+        if show_create_modal : Modal {
+            VerticalBox {
+                alignment: center;
+                HorizontalBox {
+                    alignment: center;
+                    Card {
+                        width: 450px;
+                        VerticalBox {
+                            padding: 24px; spacing: 20px;
+                            Text { text: is_editing ? "EDIT POWER PROFILE" : "CREATE POWER PROFILE"; font_size: 20px; font_weight: 900; color: Theme.accent_cyan; }
+                            VerticalBox {
+                                spacing: 4px; Text { text: "PROFILE NAME"; color: Theme.text_muted; font_size: 11px; font_weight: 700; }
+                                LineEdit { text <=> current_name; enabled: !is_editing; }
+                            }
+                            HorizontalBox {
+                                spacing: 16px;
+                                VerticalBox { spacing: 4px; Text { text: "CPU MAX MHZ"; color: Theme.text_muted; font_size: 11px; font_weight: 700; } LineEdit { text <=> current_cpu; } }
+                                VerticalBox { spacing: 4px; Text { text: "GPU LOCK MHZ"; color: Theme.text_muted; font_size: 11px; font_weight: 700; } LineEdit { text <=> current_gpu; } }
+                            }
+                            HorizontalBox {
+                                spacing: 16px;
+                                VerticalBox { spacing: 4px; Text { text: "PL SHORT (W)"; color: Theme.text_muted; font_size: 11px; font_weight: 700; } LineEdit { text <=> current_ps; } }
+                                VerticalBox { spacing: 4px; Text { text: "PL LONG (W)"; color: Theme.text_muted; font_size: 11px; font_weight: 700; } LineEdit { text <=> current_pl; } }
+                            }
+                            HorizontalBox {
+                                spacing: 16px; alignment: end;
+                                Button { text: "CANCEL"; clicked => { show_create_modal = false } }
+                                Button { 
+                                    text: is_editing ? "UPDATE" : "SAVE"; primary: true;
+                                    clicked => {
+                                        root.save_power({ name: current_name, description: "Custom performance profile", cpu_mhz: current_cpu.to_float(), gpu_mhz: current_gpu.to_float(), p_short: current_ps.to_float(), p_long: current_pl.to_float(), is_system: false });
+                                        show_create_modal = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Capeit
+Comment=Advanced Hardware & Thermal Control
+Exec=capeit-gui
+Icon=processor
+Terminal=false
+Type=Application
+Categories=System;Settings;
