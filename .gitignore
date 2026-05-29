@@ -3,3 +3,4 @@ Cargo.lock
 .slint-viewer.*
 .env
 *.log
+CONTEXT.md

@@ -153,8 +153,8 @@ component Toast inherits Rectangle {
 
 export component AppWindow inherits Window {
     title: "Capeit - Performance Studio";
-    min-width: 850px;
-    min-height: 600px;
+    min-width: 1000px;
+    min-height: 720px;
     background: Theme.bg_deep;
 
     // Telemetry
@@ -250,6 +250,7 @@ export component AppWindow inherits Window {
                     
                     // TOP HUB ROW
                     HorizontalBox {
+                        padding: 0;
                         spacing: 20px;
                         vertical_stretch: 1;
                         
@@ -300,40 +301,95 @@ export component AppWindow inherits Window {
                         }
                     }
 
-                    // BOTTOM ROW
-                    HorizontalBox {
-                        spacing: 20px;
-                        height: 180px;
-                        HubCard {
-                            title: "SYSTEM HEALTH";
-                            horizontal_stretch: 1.5;
-                            HorizontalBox {
-                                spacing: 30px;
+                    // SYSTEM HEALTH ROW
+                    HubCard {
+                        title: "SYSTEM HEALTH";
+                        height: 130px;
+                        HorizontalBox {
+                            padding: 0; spacing: 30px;
+                            alignment: center;
+                            MiniStat { 
+                                label: "RAM USAGE"; 
+                                value: "\{round(ram_used*10)/10.0} / \{round(ram_total*10)/10.0} GB"; 
+                                progress: ram_total > 0 ? ram_used/ram_total : 0; 
+                                horizontal_stretch: 1; 
+                            }
+                            MiniStat { 
+                                label: "POWER SOURCE"; 
+                                value: ac_connected ? "AC ADAPTER" : "BATTERY"; 
+                                progress: ac_connected ? 1.0 : 0.5; 
+                                bar_color: Theme.warning; 
+                                horizontal_stretch: 1; 
+                            }
+                            
+                            VerticalBox {
                                 alignment: center;
-                                MiniStat { label: "RAM"; value: "\{round(ram_used*10)/10.0}GB"; progress: ram_total > 0 ? ram_used/ram_total : 0; width: 120px; }
-                                MiniStat { label: "POWER"; value: ac_connected ? "AC" : "BATT"; progress: ac_connected ? 1.0 : 0.5; bar_color: Theme.warning; width: 120px; }
-                                
                                 Rectangle {
-                                    width: 140px; height: 45px;
-                                    background: is_throttled ? Theme.error : Theme.success;
+                                    width: 170px; height: 45px;
+                                    background: is_throttled ? Theme.error.darker(0.5) : Theme.success.darker(0.5);
                                     border_radius: 8px;
-                                    Text { text: is_throttled ? "THROTTLED" : "OPTIMAL"; color: Theme.bg_deep; font_weight: 900; horizontal_alignment: center; vertical_alignment: center; }
+                                    border_width: 1px;
+                                    border_color: is_throttled ? Theme.error : Theme.success;
+                                    Text { 
+                                        text: is_throttled ? "SYSTEM THROTTLED" : "SYSTEM OPTIMAL"; 
+                                        color: is_throttled ? Theme.error : Theme.success; 
+                                        font_weight: 900; 
+                                        font_size: 11px;
+                                        horizontal_alignment: center; 
+                                        vertical_alignment: center; 
+                                    }
                                 }
                             }
                         }
-                        HubCard {
-                            title: "HARDWARE IDENTIFIER";
-                            horizontal_stretch: 1;
+                    }
+
+                    // HARDWARE IDENTIFIER ROW
+                    HubCard {
+                        title: "HARDWARE IDENTIFIER";
+                        height: 130px;
+                        HorizontalBox {
+                            padding: 0; spacing: 20px;
+                            alignment: space-between;
+                            
+                            // CPU INFO
                             VerticalBox {
-                                padding: 0; alignment: center; spacing: 4px;
-                                Text { text: cpu_name; color: Theme.text_main; font_size: 15px; font_weight: 700; overflow: elide; }
+                                alignment: center; spacing: 4px; horizontal_stretch: 1;
+                                Text { text: "PROCESSOR"; color: Theme.text_muted; font_size: 10px; font_weight: 700; }
+                                Text { text: cpu_name; color: Theme.text_main; font_size: 14px; font_weight: 700; overflow: elide; }
                                 Text { text: "Limit: \{active_cpu_limit}MHz | TJ: -\{active_thermal_limit}°C"; color: Theme.text_muted; font_size: 11px; }
-                                Text { text: gpu_name; color: Theme.text_muted; font_size: 13px; overflow: elide; }
+                            }
+
+                            Rectangle { width: 1px; background: #30363D; height: 40px; }
+
+                            // GPU INFO
+                            VerticalBox {
+                                alignment: center; spacing: 4px; horizontal_stretch: 1;
+                                Text { text: "GRAPHICS"; color: Theme.text_muted; font_size: 10px; font_weight: 700; }
+                                Text { text: gpu_name; color: Theme.text_main; font_size: 14px; font_weight: 700; overflow: elide; }
                                 Text { text: "Limit: \{active_gpu_limit}MHz | Temp: \{active_gpu_temp_limit}°C"; color: Theme.text_muted; font_size: 11px; }
+                            }
+
+                            Rectangle { width: 1px; background: #30363D; height: 40px; }
+
+                            // ACTIVE PROFILES (Horizontal Stack)
+                            VerticalBox {
+                                alignment: center; spacing: 8px; horizontal_stretch: 1;
+                                Text { text: "ACTIVE PROFILES"; color: Theme.text_muted; font_size: 10px; font_weight: 700; }
                                 HorizontalBox {
-                                    padding: 0; spacing: 10px;
-                                    Rectangle { background: Theme.accent_blue; border_radius: 4px; height: 22px; HorizontalBox { padding: 5px; Text { text: active_power; color: white; font_weight: 700; font_size: 11px; } } }
-                                    Rectangle { background: Theme.accent_cyan; border_radius: 4px; height: 22px; HorizontalBox { padding: 5px; Text { text: active_thermal; color: Theme.bg_deep; font_weight: 700; font_size: 11px; } } }
+                                    spacing: 8px;
+                                    alignment: center;
+                                    Rectangle { 
+                                        background: Theme.accent_blue.with-alpha(0.15); 
+                                        border_radius: 4px; border_width: 1px; border_color: Theme.accent_blue; 
+                                        height: 26px; horizontal_stretch: 1; min-width: 100px;
+                                        HorizontalBox { padding: 4px; Text { text: active_power; color: Theme.accent_blue; font_weight: 700; font_size: 11px; horizontal_alignment: center; vertical_alignment: center; } } 
+                                    }
+                                    Rectangle { 
+                                        background: Theme.accent_cyan.with-alpha(0.15); 
+                                        border_radius: 4px; border_width: 1px; border_color: Theme.accent_cyan; 
+                                        height: 26px; horizontal_stretch: 1; min-width: 100px;
+                                        HorizontalBox { padding: 4px; Text { text: active_thermal; color: Theme.accent_cyan; font_weight: 700; font_size: 11px; horizontal_alignment: center; vertical_alignment: center; } } 
+                                    }
                                 }
                             }
                         }
