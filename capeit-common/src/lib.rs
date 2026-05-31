@@ -26,6 +26,8 @@ pub struct Telemetry {
     pub active_gpu_limit: u32,
     pub active_thermal_limit: i32,
     pub active_gpu_temp_limit: u32,
+    pub active_p_short: u32,
+    pub active_p_long: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

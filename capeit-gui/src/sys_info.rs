@@ -1,6 +1,10 @@
 use anyhow::Result;
 use tokio::process::Command;
+use serde::{Serialize, Deserialize};
+use std::path::PathBuf;
+use std::fs;
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct InxiData {
     pub distro: String,
     pub desktop: String,
@@ -12,7 +16,26 @@ pub struct InxiData {
     pub raw: String,
 }
 
+fn get_cache_path() -> Option<PathBuf> {
+    dirs::cache_dir().map(|mut p| {
+        p.push("capeit");
+        p.push("sys_info.json");
+        p
+    })
+}
+
 pub async fn fetch_inxi_data() -> Result<InxiData> {
+    // Try to load from cache first
+    if let Some(cache_path) = get_cache_path() {
+        if cache_path.exists() {
+            if let Ok(data) = fs::read_to_string(&cache_path) {
+                if let Ok(cached_info) = serde_json::from_str::<InxiData>(&data) {
+                    return Ok(cached_info);
+                }
+            }
+        }
+    }
+
     let output = Command::new("inxi")
         .args(["-Fxz", "-c0"]) 
         .output().await?;
@@ -81,6 +104,14 @@ pub async fn fetch_inxi_data() -> Result<InxiData> {
             }
             _ => {}
         }
+    }
+
+    // Save to cache
+    if let Some(cache_path) = get_cache_path() {
+        if let Some(parent) = cache_path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        let _ = fs::write(cache_path, serde_json::to_string(&data).unwrap_or_default());
     }
 
     Ok(data)

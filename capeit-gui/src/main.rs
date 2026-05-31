@@ -181,6 +181,8 @@ async fn send_action_raw(
                     ui.set_active_gpu_limit(tel.active_gpu_limit as i32);
                     ui.set_active_thermal_limit(tel.active_thermal_limit as i32);
                     ui.set_active_gpu_temp_limit(tel.active_gpu_temp_limit as i32);
+                    ui.set_active_p_short(tel.active_p_short as i32);
+                    ui.set_active_p_long(tel.active_p_long as i32);
 
                     if first_tel_sync {
                         ui.set_manual_cpu_val(tel.active_cpu_limit as f32);

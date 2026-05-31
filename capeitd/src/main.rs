@@ -240,6 +240,8 @@ async fn handle_client(mut stream: UnixStream, state: Arc<Mutex<AppState>>) -> R
                     s.active_power = n;
                     s.telemetry.active_cpu_limit = p.cpu_max_mhz;
                     s.telemetry.active_gpu_limit = p.gpu_lock_mhz;
+                    s.telemetry.active_p_short = p.p_short_w;
+                    s.telemetry.active_p_long = p.p_long_w;
                     DaemonResponse::Ok
                 } else { DaemonResponse::Error("Not found".into()) }
             }
@@ -270,7 +272,13 @@ async fn handle_client(mut stream: UnixStream, state: Arc<Mutex<AppState>>) -> R
                 state.lock().await.telemetry.active_gpu_limit = m;
                 DaemonResponse::Ok 
             }
-            Action::SetPowerLimits { short, long } => { let _ = apply_power(short, long); DaemonResponse::Ok }
+            Action::SetPowerLimits { short, long } => { 
+                let _ = apply_power(short, long); 
+                let mut s = state.lock().await;
+                s.telemetry.active_p_short = short;
+                s.telemetry.active_p_long = long;
+                DaemonResponse::Ok 
+            }
             Action::SetThermalTarget(o) => { 
                 let _ = apply_thermal(o); 
                 state.lock().await.telemetry.active_thermal_limit = o as i32;

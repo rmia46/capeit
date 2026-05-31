@@ -36,6 +36,8 @@ export component AppWindow inherits Window {
     in property <int> active_gpu_limit: 0;
     in property <int> active_thermal_limit: 0;
     in property <int> active_gpu_temp_limit: 0;
+    in property <int> active_p_short: 0;
+    in property <int> active_p_long: 0;
     
     // System Info (Dynamic from inxi)
     in property <string> sys_distro: "";
@@ -123,7 +125,7 @@ export component AppWindow inherits Window {
                         
                         // CPU HUB
                         HubCard {
-                            title: "CPU CORE HUB";
+                            title: "CPU METRICS";
                             horizontal_stretch: 1;
                             VerticalBox {
                                 spacing: 12px;
@@ -136,7 +138,7 @@ export component AppWindow inherits Window {
                         
                         // GPU HUB
                         HubCard {
-                            title: "GPU GRAPHICS HUB";
+                            title: "GPU METRICS";
                             horizontal_stretch: 1;
                             VerticalBox {
                                 spacing: 12px;
@@ -174,7 +176,7 @@ export component AppWindow inherits Window {
                                 alignment: center;
                                 Rectangle {
                                     width: 170px; height: 45px;
-                                    background: is_throttled ? Theme.error.darker(0.5) : Theme.success.darker(0.5);
+                                    background: is_throttled ? Theme.error.darker(0.5) : transparent;
                                     border_radius: 8px;
                                     border_width: 1px;
                                     border_color: is_throttled ? Theme.error : Theme.success;
@@ -195,39 +197,40 @@ export component AppWindow inherits Window {
                         }
                     }
 
-                    // HARDWARE IDENTIFIER ROW
+                    // PROFILE STATUS ROW
                     HubCard {
-                        title: "HARDWARE IDENTIFIER";
+                        title: "PROFILE STATUS";
                         VerticalBox {
                             padding: 0; spacing: 20px;
                             HorizontalBox {
                                 padding: 0; spacing: 20px;
                                 alignment: space-between;
                                 
-                                // CPU INFO
+                                // CPU CAPS
                                 VerticalBox {
                                     alignment: center; spacing: 4px; horizontal_stretch: 1;
                                     HorizontalBox {
                                         spacing: 6px; alignment: center;
                                         VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Cpu; stroke: Theme.text_muted; size: 12px; } }
-                                        Text { text: "PROCESSOR"; color: Theme.text_muted; font_size: 10px; font_weight: 700; vertical_alignment: center; }
+                                        Text { text: "CPU STATUS"; color: Theme.text_muted; font_size: 10px; font_weight: 700; vertical_alignment: center; }
                                     }
                                     Text { text: cpu_name; color: Theme.text_main; font_size: 14px; font_weight: 700; overflow: elide; }
-                                    Text { text: "Limit: \{active_cpu_limit}MHz | TJ: -\{active_thermal_limit}°C"; color: Theme.text_muted; font_size: 11px; }
+                                    Text { text: "Cap: \{active_cpu_limit} MHz | TJ Limit: \{active_thermal_limit}°C"; color: Theme.text_muted; font_size: 11px; }
+                                    Text { text: "PS: \{active_p_short}W | PL: \{active_p_long}W"; color: Theme.accent_blue; font_size: 11px; font_weight: 700; }
                                 }
 
                                 Rectangle { width: 1px; background: #30363D; height: 40px; }
 
-                                // GPU INFO
+                                // GPU CAPS
                                 VerticalBox {
                                     alignment: center; spacing: 4px; horizontal_stretch: 1;
                                     HorizontalBox {
                                         spacing: 6px; alignment: center;
                                         VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Monitor; stroke: Theme.text_muted; size: 12px; } }
-                                        Text { text: "GRAPHICS"; color: Theme.text_muted; font_size: 10px; font_weight: 700; vertical_alignment: center; }
+                                        Text { text: "GPU STATUS"; color: Theme.text_muted; font_size: 10px; font_weight: 700; vertical_alignment: center; }
                                     }
                                     Text { text: gpu_name; color: Theme.text_main; font_size: 14px; font_weight: 700; overflow: elide; }
-                                    Text { text: "Limit: \{active_gpu_limit}MHz | Temp: \{active_gpu_temp_limit}°C"; color: Theme.text_muted; font_size: 11px; }
+                                    Text { text: "Cap: \{active_gpu_limit} MHz | Temp Cap: \{active_gpu_temp_limit}°C"; color: Theme.text_muted; font_size: 11px; }
                                 }
 
                                 Rectangle { width: 1px; background: #30363D; height: 40px; }
