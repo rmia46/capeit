@@ -1,46 +1,62 @@
-# Capeit Project Context
+# Capeit Project Context (v0.2.3)
 
 ## Overview
-**Capeit** is a high-performance, professional-grade hardware and thermal management suite for Linux. It is designed to replace the legacy `gmode` bash script with a secure, responsive, and visually sophisticated application built using **Rust** and the **Slint** GUI toolkit.
+**Capeit** is a high-performance, professional-grade hardware and thermal management suite for Linux. It provides a modular, secure, and visually sophisticated environment for monitoring and controlling system performance, built using **Rust** and the **Slint** GUI toolkit.
 
 ## Architecture
-Capeit follows a **Daemon/Client** architecture to ensure secure hardware access and persistent background monitoring:
+Capeit uses a **Daemon/Client** architecture to bridge secure hardware access with a responsive user interface:
 
-- **`capeitd` (Daemon)**: A root-level service that communicates directly with hardware via `sysfs`, `cpupower`, `nvidia-smi`, and `intel-undervolt`. It enforces strict safety bounds and manages the system-wide configuration.
-- **`capeit-gui` (Client)**: A high-fidelity user-space application that provides real-time visualization and control. It communicates with the daemon via Unix Domain Sockets (`/tmp/capeit.sock`).
-- **`capeit-common`**: A shared library containing IPC protocols and data structures used by both the daemon and the GUI.
+### 1. `capeitd` (Daemon)
+- **Role**: Root-level service (`systemd`) managing hardware interfaces.
+- **Interfaces**: Communicates with `sysfs` (CPU/Thermal), `nvidia-smi` (GPU), and `intel-undervolt` (Power/TDP).
+- **Safety**: Enforces hardcoded boundaries to prevent hardware damage.
+- **Persistence**: Manages a global `config.toml` in the system or user config directory.
 
-## Implemented Features
+### 2. `capeit-gui` (Client)
+- **Role**: A user-space GUI for visualization and control.
+- **IPC**: Communicates with the daemon via **Unix Domain Sockets** (`/tmp/capeit.sock`) using JSON serialization.
+- **Compatibility**: Uses `#[serde(default)]` in telemetry structures to maintain compatibility between different GUI/Daemon versions.
 
-### 1. High-Fidelity Dashboard
-- **Segmented Hubs**: Dedicated, fluid-responsive cards for CPU Core and GPU Graphics metrics.
-- **Real-Time Graphing**: High-resolution, anti-aliased vector charts rendered via `tiny_skia`. Each hub displays a 60-second history overlaying Usage, Temperature, and Clock Speeds.
-- **Responsive Layout**: A modern Nordic dark theme that scales perfectly across different screen sizes and high-DPI displays.
-- **Hardware Identifier**: Dynamic detection of CPU and GPU models, including live monitoring of active hardware limits (MHz and Thermal offsets).
+### 3. `capeit-common`
+- **Role**: Shared library defining the IPC protocol (`Action` and `DaemonResponse` enums) and core data structures (`Telemetry`, `PowerProfile`, `ThermalProfile`).
 
-### 2. Advanced Profile Management
-- **Persistent Storage**: All settings are stored in `~/.config/capeit/config.toml` using the TOML format.
-- **System Profiles**: Built-in templates including `powersave`, `balanced`, `gmode-lite`, `gmode-max`, and a `stock` profile for factory defaults.
-- **Custom Templates**: Users can create, edit, and delete their own performance profiles through a dedicated modal dialog with input validation.
-- **Thermal Profiles**: Independent thermal management templates (e.g., `Normal`, `None`) to control throttling behavior.
+## Design & Coding Paradigms
 
-### 3. Manual Hardware Overrides
-- **Zero-Jitter Sliders**: Stabilized manual controls for CPU Max Clock, Thermal TJ Offset, and GPU Temperature limits.
-- **Immediate Application**: One-click "Set" buttons that trigger atomic hardware updates via the daemon.
+### 1. Modular Slint Architecture
+The UI is split into focused files to maintain scalability:
+- **`theme.slint`**: Defines global colors (Nordic theme), gradients, and UI structures.
+- **`widgets.slint`**: Reusable components (e.g., `HubCard`, `MiniStat`, `TabBtn`, `ThemedSlider`).
+- **`app.slint`**: Orchestrates the main window layout and category views.
 
-### 4. User Experience (UX)
-- **Toast Notifications**: Sleek floating notifications at the bottom of the screen providing immediate confirmation or error feedback for every action.
-- **Collapsible Sidebar**: A space-saving navigation menu for switching between Dashboard, Power Manager, and System Information.
-- **Safety Net**: Hardcoded daemon-level boundaries to prevent accidental hardware damage from extreme values.
+### 2. Icon Integration
+Icons are integrated using the `lucide-slint` library. The project uses a standardized component pattern:
+- **`IconDisplay`**: A wrapper that accepts an `IconSet` enum value.
+- **Usage**: `IconDisplay { icon: IconSet.Cpu, stroke: Theme.text_main, size: 16px; }`
+- **Vertical Alignment**: Icons and text are strictly aligned using `VerticalLayout` or `VerticalBox` wrappers with `alignment: center`.
+
+### 3. Performance-First Telemetry
+- **No Graphs**: Heavy vector graphing (`tiny-skia`) was removed in v0.2.x to ensure near-zero GUI overhead.
+- **Real-Time Sensors**: Telemetry is visualized via `MiniStat` bars (progress indicators) for Usage, Temperature, and Clock Speeds.
+- **Throttling UI**: The `SYSTEM HEALTH` badge uses an **outline style** for "OPTIMAL" status and a **solid red** style for "THROTTLED" alerts.
+
+### 4. System Info Caching
+- **Efficiency**: Detailed hardware reports (`inxi`) are expensive to generate. The app caches this data in `~/.cache/capeit/sys_info.json`.
+- **Logic**: On launch, the app attempts to load the cache. A background task updates the cache only if it's missing or if a refresh is requested, ensuring instant UI availability.
 
 ## Technical Stack
 - **Languages**: Rust (1.75+)
-- **UI Framework**: Slint (1.9)
-- **Graphics Engine**: tiny-skia (0.11) for vector rendering
-- **IPC**: Unix Domain Sockets with Serde/JSON serialization
-- **Configuration**: TOML
-- **External Dependencies**: `cpupower`, `nvidia-smi`, `intel-undervolt`
+- **UI Framework**: Slint (1.16)
+- **IPC**: Unix Domain Sockets + Serde/JSON
+- **Icons**: lucide-slint
+- **CLI Helpers**: `inxi` (hardware specs), `nvidia-smi` (GPU), `intel-undervolt` (CPU Power).
 
-## Installation & Deployment
-- **Installer**: A comprehensive `install.sh` script automates the build, binary deployment, systemd service setup, and desktop entry creation.
-- **Persistence**: Managed via `capeitd.service` for automatic boot-start and hardware limit enforcement.
+## Directory Structure
+- `capeit-gui/src/`:
+    - `main.rs`: UI orchestration and IPC loop.
+    - `telemetry.rs`: App state management.
+    - `sys_info.rs`: Hardware detection and caching logic.
+    - `utils.rs`: Formatting and profile helpers.
+- `capeitd/src/`:
+    - `main.rs`: Socket server and hardware control logic.
+- `capeit-common/src/`:
+    - `lib.rs`: Shared types and IPC definitions.

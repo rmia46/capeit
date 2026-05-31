@@ -142,17 +142,19 @@ async fn update_telemetry(state: &Arc<Mutex<AppState>>) -> Result<()> {
     s.telemetry.cpu_temp = find_cpu_temp().unwrap_or(0.0);
     s.telemetry.cpu_clock_mhz = read_sysfs_u32("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq").unwrap_or(0) / 1000;
     
-    if let Ok(out) = std::process::Command::new("nvidia-smi").args(["--query-gpu=name,temperature.gpu,clocks.current.graphics,utilization.gpu,memory.used,memory.total", "--format=csv,noheader,nounits"]).output() {
+    if let Ok(out) = std::process::Command::new("nvidia-smi").args(["--query-gpu=name,temperature.gpu,clocks.sm,utilization.gpu,memory.used,memory.total", "--format=csv,noheader,nounits"]).output() {
         let out_raw = String::from_utf8_lossy(&out.stdout);
-        let out_str = out_raw.trim();
-        let p: Vec<&str> = out_str.split(',').map(|x| x.trim()).collect();
-        if p.len() >= 6 {
-            s.telemetry.gpu_name = p[0].to_string();
-            s.telemetry.gpu_temp = p[1].parse().unwrap_or(0.0);
-            s.telemetry.gpu_clock_mhz = p[2].parse().unwrap_or(0);
-            s.telemetry.gpu_usage = p[3].parse().unwrap_or(0.0);
-            s.telemetry.vram_used_mb = p[4].parse().unwrap_or(0);
-            s.telemetry.vram_total_mb = p[5].parse().unwrap_or(0);
+        for line in out_raw.lines() {
+            let p: Vec<&str> = line.split(',').map(|x| x.trim()).collect();
+            if p.len() >= 6 {
+                s.telemetry.gpu_name = p[0].to_string();
+                s.telemetry.gpu_temp = p[1].parse().unwrap_or(0.0);
+                s.telemetry.gpu_clock_mhz = p[2].parse().unwrap_or(0);
+                s.telemetry.gpu_usage = p[3].parse().unwrap_or(0.0);
+                s.telemetry.vram_used_mb = p[4].parse().unwrap_or(0);
+                s.telemetry.vram_total_mb = p[5].parse().unwrap_or(0);
+                break;
+            }
         }
     }
     
@@ -311,7 +313,7 @@ fn apply_cpu(mhz: u32) -> Result<()> {
     std::process::Command::new("cpupower").args(["frequency-set", "-u", &format!("{}MHz", mhz)]).status()?; Ok(()) 
 }
 fn apply_gpu(mhz: u32) -> Result<()> { 
-    std::process::Command::new("nvidia-smi").args(["--lock-gpu-clocks", &format!("{},{}", mhz, mhz)]).status()?; Ok(()) 
+    std::process::Command::new("nvidia-smi").args(["--lock-gpu-clocks", &format!("210,{}", mhz)]).status()?; Ok(()) 
 }
 fn apply_gpu_temp(lim: u32) -> Result<()> {
     std::process::Command::new("nvidia-smi").args(["-gpu-target-temp", &format!("{}", lim)]).status()?; Ok(())
