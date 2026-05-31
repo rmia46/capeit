@@ -35,8 +35,20 @@ async fn main() -> Result<()> {
     let _ = std::fs::remove_file(SOCKET_PATH);
     let config = load_config().unwrap_or_default();
     
+    let mut telemetry = Telemetry { cpu_name: CPU_NAME.clone(), kernel: KERNEL.clone(), ..Telemetry::default() };
+    if let Some(p) = config.power_profiles.get("balanced") {
+        telemetry.active_cpu_limit = p.cpu_max_mhz;
+        telemetry.active_gpu_limit = p.gpu_lock_mhz;
+        telemetry.active_p_short = p.p_short_w;
+        telemetry.active_p_long = p.p_long_w;
+    }
+    if let Some(t) = config.thermal_profiles.get("Normal") {
+        telemetry.active_thermal_limit = t.cpu_tj_offset as i32;
+        telemetry.active_gpu_temp_limit = t.gpu_temp_limit;
+    }
+
     let state = Arc::new(Mutex::new(AppState {
-        telemetry: Telemetry { cpu_name: CPU_NAME.clone(), kernel: KERNEL.clone(), ..Telemetry::default() },
+        telemetry,
         last_cpu_sample: get_cpu_sample().unwrap_or(CpuSample { total: 0, idle: 0 }),
         config,
         active_power: "balanced".into(),

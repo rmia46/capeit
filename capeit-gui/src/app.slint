@@ -1,7 +1,7 @@
 import { Button, VerticalBox, HorizontalBox, LineEdit, Slider, StandardListView, ScrollView } from "std-widgets.slint";
 import { IconDisplay, IconSet } from "@lucide";
 import { Theme, PowerProfileUI, ThermalProfileUI } from "theme.slint";
-import { Card, HubCard, MiniStat, NavBtn, TabBtn, IconButton, Modal, Toast } from "widgets.slint";
+import { Card, HubCard, MiniStat, NavBtn, TabBtn, IconButton, Modal, Toast, ThemedSlider } from "widgets.slint";
 
 export { Theme, PowerProfileUI, ThermalProfileUI }
 
@@ -377,7 +377,7 @@ export component AppWindow inherits Window {
                                 VerticalBox {
                                     HorizontalBox { spacing: 6px; alignment: start; VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Cpu; size: 14px; stroke: Theme.text_muted; } } Text { text: "CPU Max Clock (MHz)"; color: Theme.text_muted; vertical_alignment: center; } }
                                     HorizontalBox {
-                                        s1 := Slider { minimum: 800; maximum: 5000; value <=> root.manual_cpu_val; }
+                                        s1 := ThemedSlider { minimum: 800; maximum: 5000; value <=> root.manual_cpu_val; }
                                         Text { text: "\{round(s1.value)}"; color: Theme.text_main; width: 60px; }
                                         IconButton { primary: true; clicked => { root.set_manual("cpu", round(s1.value)) } IconDisplay { icon: IconSet.Save; size: 16px; stroke: Theme.bg_deep; } }
                                     }
@@ -385,7 +385,7 @@ export component AppWindow inherits Window {
                                 VerticalBox {
                                     HorizontalBox { spacing: 6px; alignment: start; VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Thermometer; size: 14px; stroke: Theme.text_muted; } } Text { text: "Thermal Offset (-°C)"; color: Theme.text_muted; vertical_alignment: center; } }
                                     HorizontalBox {
-                                        s2 := Slider { minimum: 0; maximum: 30; value <=> root.manual_thermal_val; }
+                                        s2 := ThemedSlider { minimum: 0; maximum: 30; value <=> root.manual_thermal_val; }
                                         Text { text: "-\{round(s2.value)}"; color: Theme.text_main; width: 60px; }
                                         IconButton { primary: true; clicked => { root.set_manual("thermal", round(s2.value)) } IconDisplay { icon: IconSet.Save; size: 16px; stroke: Theme.bg_deep; } }
                                     }
@@ -393,7 +393,7 @@ export component AppWindow inherits Window {
                                 VerticalBox {
                                     HorizontalBox { spacing: 6px; alignment: start; VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Monitor; size: 14px; stroke: Theme.text_muted; } } Text { text: "GPU Temp Limit (°C)"; color: Theme.text_muted; vertical_alignment: center; } }
                                     HorizontalBox {
-                                        s3 := Slider { minimum: 60; maximum: 95; value <=> root.manual_gpu_temp_val; }
+                                        s3 := ThemedSlider { minimum: 60; maximum: 95; value <=> root.manual_gpu_temp_val; }
                                         Text { text: "\{round(s3.value)}"; color: Theme.text_main; width: 60px; }
                                         IconButton { primary: true; clicked => { root.set_manual("gputemp", round(s3.value)) } IconDisplay { icon: IconSet.Save; size: 16px; stroke: Theme.bg_deep; } }
                                     }
