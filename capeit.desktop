@@ -1,8 +1,9 @@
 [Desktop Entry]
-Name=Capeit
-Comment=Advanced Hardware & Thermal Control
+Name=CapeIt
+Comment=Simple Hardware & Thermal Control
 Exec=capeit-gui
-Icon=processor
+Icon=capeit
 Terminal=false
 Type=Application
 Categories=System;Settings;
+Keywords=cpu;gpu;power;thermal;
