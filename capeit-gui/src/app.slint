@@ -79,6 +79,7 @@ export component AppWindow inherits Window {
     callback delete_power(string);
     callback save_power(PowerProfileUI);
     callback set_manual(string, int);
+    callback open_link(string);
 
     Rectangle {
         HorizontalBox {
@@ -122,6 +123,10 @@ export component AppWindow inherits Window {
                     NavBtn { 
                         text: "System Info"; active: active_side == 2; clicked => { active_side = 2 }
                         IconDisplay { icon: IconSet.Info; stroke: active_side == 2 ? Theme.bg_deep : Theme.text_main; size: 20px; }
+                    }
+                    NavBtn { 
+                        text: "About"; active: active_side == 3; clicked => { active_side = 3 }
+                        IconDisplay { icon: IconSet.Info; stroke: active_side == 3 ? Theme.bg_deep : Theme.text_main; size: 20px; }
                     }
                     Rectangle {}
                 }
@@ -496,6 +501,89 @@ export component AppWindow inherits Window {
                             }
                         }
                     }
+                }
+
+                // ABOUT PAGE
+                if active_side == 3 : VerticalBox {
+                    spacing: 20px;
+                    alignment: start;
+                    
+                    HubCard {
+                        title: "ABOUT CAPEIT";
+                        VerticalBox {
+                            padding: 20px; spacing: 25px;
+                            alignment: center;
+                            
+                            VerticalBox {
+                                spacing: 10px;
+                                alignment: center;
+                                Image {
+                                    source: @image-url("logo.svg");
+                                    width: 80px; height: 80px;
+                                }
+                                Text { text: "CapeIt"; font_size: 32px; font_weight: 900; color: Theme.accent_cyan; }
+                                Text { text: "Simple GUI wrapper for hardware power control"; color: Theme.text_muted; font_size: 14px; }
+                            }
+
+                            Rectangle { height: 1px; background: #30363D; width: 100%; }
+
+                            VerticalBox {
+                                spacing: 15px;
+                                HorizontalBox {
+                                    alignment: center; spacing: 40px;
+                                    VerticalBox {
+                                        alignment: center; spacing: 4px;
+                                        Text { text: "VERSION"; color: Theme.text_muted; font_size: 10px; font_weight: 700; }
+                                        Text { text: "0.2.8"; color: Theme.text_main; font_size: 16px; font_weight: 700; }
+                                    }
+                                    VerticalBox {
+                                        alignment: center; spacing: 4px;
+                                        Text { text: "AUTHOR"; color: Theme.text_muted; font_size: 10px; font_weight: 700; }
+                                        Text { text: "roman"; color: Theme.text_main; font_size: 16px; font_weight: 700; }
+                                    }
+                                }
+
+                                VerticalBox {
+                                    alignment: center; spacing: 8px;
+                                    Text { text: "SOURCE CODE"; color: Theme.text_muted; font_size: 10px; font_weight: 700; }
+                                    Rectangle {
+                                        background: link_touch.has-hover ? Theme.bg_card.brighter(0.2) : Theme.bg_card; 
+                                        border_radius: 4px; border_width: 1px; border_color: #30363D;
+                                        height: 35px; width: 350px;
+                                        animate background { duration: 150ms; }
+                                        
+                                        HorizontalBox {
+                                            padding: 8px; spacing: 8px; alignment: center;
+                                            IconDisplay { icon: IconSet.Info; size: 16px; stroke: Theme.accent_cyan; }
+                                            Text { text: "github.com/rmia46/capeit"; color: Theme.accent_cyan; font_weight: 700; font_size: 13px; }
+                                        }
+
+                                        link_touch := TouchArea {
+                                            clicked => { root.open_link("https://github.com/rmia46/capeit") }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: #30363D; width: 100%; }
+
+                            VerticalBox {
+                                spacing: 10px; alignment: center;
+                                Text { 
+                                    text: "Developed with the assistance of Gemini AI"; 
+                                    color: Theme.text_muted; 
+                                    font_size: 13px; 
+                                    font_italic: true;
+                                }
+                                HorizontalBox {
+                                    spacing: 8px; alignment: center;
+                                    IconDisplay { icon: IconSet.Cpu; size: 14px; stroke: Theme.text_muted; }
+                                    Text { text: "A simple hobby project"; color: Theme.text_muted; font_size: 11px; }
+                                }
+                            }
+                        }
+                    }
+                    Rectangle { vertical_stretch: 1; }
                 }
             }
         }

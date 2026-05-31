@@ -124,6 +124,10 @@ fn setup_callbacks(ui: &AppWindow, tx: mpsc::Sender<Action>) {
         };
         let _ = tx_manual.try_send(action);
     });
+
+    ui.on_open_link(|url| {
+        let _ = std::process::Command::new("xdg-open").arg(url.as_str()).spawn();
+    });
 }
 
 async fn send_action_raw(
