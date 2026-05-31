@@ -1,0 +1,175 @@
+import { Button, VerticalBox, HorizontalBox, LineEdit, Slider, StandardListView, ScrollView } from "std-widgets.slint";
+import { IconDisplay, IconSet } from "@lucide";
+import { Theme } from "theme.slint";
+
+export component Card inherits Rectangle {
+    background: Theme.card_gradient;
+    border_radius: Theme.radius;
+    border_width: 1px;
+    border_color: #30363D;
+}
+
+export component HubCard inherits Rectangle {
+    in property <string> title;
+    background: Theme.card_gradient;
+    border_radius: Theme.radius;
+    border_width: 1px;
+    border_color: #30363D;
+    VerticalBox {
+        padding: 16px;
+        spacing: 12px;
+        Text { text: title; color: Theme.text_muted; font_size: 14px; font_weight: 700; }
+        @children
+    }
+}
+
+export component MiniStat inherits Rectangle {
+    in property <string> label;
+    in property <string> value;
+    in property <float> progress;
+    in property <color> bar_color: Theme.accent_cyan;
+
+    height: 60px;
+    
+    VerticalBox {
+        padding: 0; spacing: 4px;
+        HorizontalBox {
+            padding: 0; alignment: space_between;
+            HorizontalBox {
+                spacing: 6px; alignment: start;
+                VerticalLayout { alignment: center; @children }
+                Text { text: label; color: Theme.text_muted; font_size: 12px; vertical_alignment: center; }
+            }
+            Text { text: value; color: Theme.text_main; font_size: 12px; font_weight: 700; vertical_alignment: center; }
+        }
+        Rectangle {
+            height: 4px; background: #000000; border_radius: 2px;
+            Rectangle {
+                x: 0; width: parent.width * Math.max(0, Math.min(1, progress));
+                background: root.bar_color; border_radius: 2px;
+            }
+        }
+    }
+}
+
+export component NavBtn inherits Rectangle {
+    in property <string> text;
+    in property <bool> active;
+    callback clicked;
+
+    height: 50px;
+    background: active ? Theme.accent_gradient : transparent;
+    border_radius: Theme.radius;
+    
+    animate background { duration: 150ms; }
+    
+    touch := TouchArea { clicked => { root.clicked() } }
+    
+    states [
+        hover when touch.has-hover && !active : {
+            background: Theme.bg_card.with-alpha(0.3);
+        }
+    ]
+
+    HorizontalBox {
+        padding_left: 20px;
+        spacing: 12px;
+        alignment: start;
+        
+        VerticalLayout { alignment: center; @children }
+
+        Text {
+            text: text;
+            color: active ? Theme.bg_deep : Theme.text_main;
+            font_weight: 700;
+            vertical-alignment: center;
+        }
+    }
+}
+
+export component TabBtn inherits Rectangle {
+    in property <string> text;
+    in property <bool> active;
+    callback clicked;
+
+    height: 35px;
+    background: active ? Theme.bg_card : transparent;
+    border_radius: 6px;
+    
+    animate background { duration: 150ms; }
+    
+    touch := TouchArea { clicked => { root.clicked() } }
+    
+    states [
+        hover when touch.has-hover && !active : {
+            background: Theme.bg_card.with-alpha(0.5);
+        }
+    ]
+    
+    Text { 
+        text: text; 
+        color: Theme.text_main; 
+        font_weight: active ? 700 : 400;
+        horizontal_alignment: center;
+        vertical_alignment: center;
+    }
+}
+
+export component IconButton inherits Rectangle {
+    in property <color> icon_color: Theme.text_main;
+    in property <bool> primary: false;
+    callback clicked;
+    
+    height: 32px;
+    width: self.height;
+    border_radius: 6px;
+    background: primary ? Theme.accent_gradient : Theme.bg_sidebar;
+    border_width: 1px;
+    border_color: primary ? transparent : #30363D;
+    
+    animate background { duration: 150ms; }
+    animate border-color { duration: 150ms; }
+    
+    touch := TouchArea { clicked => { root.clicked() } }
+    
+    states [
+        hover when touch.has-hover : {
+            background: primary ? Theme.accent_gradient.darker(0.2) : Theme.bg_card;
+            border-color: primary ? transparent : Theme.accent_cyan;
+        }
+        pressed when touch.pressed : {
+            background: primary ? Theme.accent_gradient.darker(0.4) : Theme.bg_deep;
+        }
+    ]
+    
+    VerticalLayout {
+        alignment: center;
+        HorizontalLayout {
+            alignment: center;
+            @children
+        }
+    }
+}
+
+export component Modal inherits Rectangle {
+    background: Theme.overlay_bg;
+    TouchArea {} // consume clicks
+}
+
+export component Toast inherits Rectangle {
+    in property <string> text;
+    in property <bool> is_error;
+    
+    background: is_error ? Theme.error : Theme.bg_sidebar;
+    border_radius: 8px;
+    height: 50px;
+    width: 300px;
+    
+    Text {
+        text: text;
+        color: Theme.text_main;
+        font_weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}

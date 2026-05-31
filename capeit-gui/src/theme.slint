@@ -1,0 +1,35 @@
+export global Theme {
+    out property <color> bg_deep: #0B0E14;
+    out property <color> bg_card: #161B22;
+    out property <color> bg_sidebar: #0D1117;
+    out property <color> accent_cyan: #00E5FF;
+    out property <color> accent_blue: #2979FF;
+    out property <color> text_main: #FFFFFF;
+    out property <color> text_muted: #8B949E;
+    out property <color> success: #00E676;
+    out property <color> warning: #FFAB00;
+    out property <color> error: #FF1744;
+    out property <length> radius: 12px;
+    
+    out property <brush> card_gradient: @linear-gradient(135deg, #1A1F26 0%, #13171D 100%);
+    out property <brush> accent_gradient: @linear-gradient(135deg, #00E5FF 0%, #2979FF 100%);
+    out property <brush> overlay_bg: #1a1e26aa;
+}
+
+export struct PowerProfileUI {
+    name: string,
+    description: string,
+    cpu_mhz: int,
+    gpu_mhz: int,
+    p_short: int,
+    p_long: int,
+    is_system: bool,
+}
+
+export struct ThermalProfileUI {
+    name: string,
+    description: string,
+    tj_offset: int,
+    gpu_limit: int,
+    is_system: bool,
+}
