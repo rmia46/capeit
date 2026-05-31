@@ -6,7 +6,7 @@ import { Card, HubCard, MiniStat, NavBtn, TabBtn, IconButton, Modal, Toast, Them
 export { Theme, PowerProfileUI, ThermalProfileUI }
 
 export component AppWindow inherits Window {
-    title: "Capeit - Performance Studio";
+    title: "CapeIt";
     min-width: 1200px;
     min-height: 800px;
     background: Theme.bg_deep;
@@ -92,7 +92,25 @@ export component AppWindow inherits Window {
                     padding: 20px;
                     spacing: 20px;
                     alignment: start;
-                    Text { text: "CAPEIT"; font_size: 28px; font_weight: 900; color: Theme.accent_cyan; horizontal_alignment: center; }
+                    
+                    // Logo and Title
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: center;
+                        padding_bottom: 10px;
+                        Image {
+                            source: @image-url("logo.svg");
+                            width: 32px; height: 32px;
+                        }
+                        Text { 
+                            text: "CapeIt"; 
+                            font_size: 24px; 
+                            font_weight: 900; 
+                            color: Theme.accent_cyan; 
+                            vertical_alignment: center; 
+                        }
+                    }
+
                     NavBtn { 
                         text: "Dashboard"; active: active_side == 0; clicked => { active_side = 0 }
                         IconDisplay { icon: IconSet.LayoutDashboard; stroke: active_side == 0 ? Theme.bg_deep : Theme.text_main; size: 20px; }
@@ -434,6 +452,28 @@ export component AppWindow inherits Window {
                         }
 
                         HubCard {
+                            title: "CAPEIT ENVIRONMENT";
+                            VerticalBox {
+                                spacing: 12px;
+                                HorizontalBox { 
+                                    spacing: 8px; alignment: start;
+                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Info; stroke: Theme.success; size: 16px; } }
+                                    HorizontalBox { alignment: start; Text { text: "Uptime:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: uptime; color: Theme.text_main; horizontal_stretch: 1; vertical_alignment: center; } }
+                                }
+                                HorizontalBox { 
+                                    spacing: 8px; alignment: start;
+                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.HardDrive; size: 16px; stroke: Theme.text_muted; } }
+                                    HorizontalBox { alignment: start; Text { text: "Config Path:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: "~/.config/capeit/"; color: Theme.accent_cyan; horizontal_stretch: 1; vertical_alignment: center; } }
+                                }
+                                HorizontalBox { 
+                                    spacing: 8px; alignment: start;
+                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Zap; size: 16px; stroke: Theme.text_muted; } }
+                                    HorizontalBox { alignment: start; Text { text: "Daemon Socket:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: "/tmp/capeit.sock"; color: Theme.success; horizontal_stretch: 1; vertical_alignment: center; } }
+                                }
+                            }
+                        }
+
+                        HubCard {
                             title: "HARDWARE SPECIFICATIONS (RAW)";
                             height: 450px;
                             VerticalBox {
@@ -452,28 +492,6 @@ export component AppWindow inherits Window {
                                             horizontal-alignment: left;
                                         }
                                     }
-                                }
-                            }
-                        }
-
-                        HubCard {
-                            title: "CAPEIT ENVIRONMENT";
-                            VerticalBox {
-                                spacing: 12px;
-                                HorizontalBox { 
-                                    spacing: 8px; alignment: start;
-                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Info; size: 16px; stroke: Theme.success; } }
-                                    HorizontalBox { alignment: start; Text { text: "Uptime:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: uptime; color: Theme.text_main; horizontal_stretch: 1; vertical_alignment: center; } }
-                                }
-                                HorizontalBox { 
-                                    spacing: 8px; alignment: start;
-                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.HardDrive; size: 16px; stroke: Theme.text_muted; } }
-                                    HorizontalBox { alignment: start; Text { text: "Config Path:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: "~/.config/capeit/"; color: Theme.accent_cyan; horizontal_stretch: 1; vertical_alignment: center; } }
-                                }
-                                HorizontalBox { 
-                                    spacing: 8px; alignment: start;
-                                    VerticalLayout { alignment: center; IconDisplay { icon: IconSet.Zap; size: 16px; stroke: Theme.text_muted; } }
-                                    HorizontalBox { alignment: start; Text { text: "Daemon Socket:"; color: Theme.text_muted; width: 140px; vertical_alignment: center; } Text { text: "/tmp/capeit.sock"; color: Theme.success; horizontal_stretch: 1; vertical_alignment: center; } }
                                 }
                             }
                         }

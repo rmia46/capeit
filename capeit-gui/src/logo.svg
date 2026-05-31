@@ -1,0 +1,20 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="logo_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00F2FE" />
+            <stop offset="100%" stop-color="#4FACFE" />
+        </linearGradient>
+    </defs>
+    <!-- Background Circle -->
+    <circle cx="50" cy="50" r="45" stroke="url(#logo_grad)" stroke-width="4" stroke-opacity="0.2" fill="#0D1117" />
+    
+    <!-- Stylized 'C' with Bolt -->
+    <path d="M70 30C65 25 58 22 50 22C34.5 22 22 34.5 22 50C22 65.5 34.5 78 50 78C58 78 65 75 70 70" 
+          stroke="url(#logo_grad)" stroke-width="8" stroke-linecap="round" />
+    
+    <!-- Lightning Bolt -->
+    <path d="M50 35L40 55H55L45 75" 
+          stroke="#00F2FE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+        <animate attributeName="stroke-opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite" />
+    </path>
+</svg>
